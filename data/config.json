@@ -1,0 +1,74 @@
+{
+    "General": {
+        "Age": 62.0,
+        "Spending": 135000.0, 
+        "Wealth": 200000.00,  
+        "PrivatePensionCapital": 1000000.0,
+        "IncomeTaxRate": 0.1,
+        "CapitalTaxRate": 0.01
+    },
+    "Before": {
+        "Monthly": {
+            "Savings": 1000.0,
+            "PrivatePensionContribution": 4500.0  
+        },
+       "PrivatePensionInterest": 0.06  
+    },
+    "Early": {
+        "Age": 62.17,
+        "SeverancePay": 0.0,
+        "SpendingCut": 6000.0,
+        "PrivatePension": {
+            "Available": 1,
+            "Capital": {
+                "Percentage": 0.5, 
+                "Tax": 0.01
+            },
+            "Pension": 34362.0
+            }
+    },
+    "Legal": {
+        "Age": 65,
+        "SpendingCut": 6000.0,
+        "LegalPension": 1950.0
+    },
+    "Property": {
+        "Affordability": { 
+            "Sustainability": 0.33, 
+            "MortageInterest": 0.05,
+            "CapitalContribution": 0.03,
+            "ExtraCosts": 7500.0 
+        },
+        "Actual": {
+            "Owned": 1, 
+            "Worth":  1400000.0, 
+            "Sell": 85.0,       
+            "Mortage": 655000.0,
+            "MortageInterest": 0.0105,
+            "MortagetStart": 62.0,
+            "MortageTerm": 10.0 
+        },
+        "Replacement": {
+            "Planned": 1,
+            "Worth":  750000.0,
+            "Sell": 90.0,       
+            "Mortage": 250000.0,
+            "MortageInterest": 0.0105,
+            "MortageTerm": 10.0
+        },
+        "Rent": 1800.0
+    },
+    "Calculation": {
+        "Method": "Single",
+        "Single": {
+            "Max": 120.0,
+            "Inflation": 0.01,
+            "Performance": 0.04              
+        },
+        "Historical": {
+            "Max": 85.0,
+            "portfolioBalance": 0.5,
+            "historicalData": "./data/HistoricalRendite.csv"
+        }
+    }      
+}
