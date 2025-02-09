@@ -1,0 +1,137 @@
+def early_retirement(self, start, end):
+
+        private_pension =data.getValue(Data.] / MONTH
+        expenses = (self.config['General.Spending'] - self.config['Early.SpendingCut']) / MONTH
+        income_tax_rate = self.config['General.IncomeTaxRate']
+        capital_tax_rate = self.config['General.CapitalTaxRate']
+        legal_pension = 0
+        years = end - start
+        
+        wealth += (self.config['Early.SeverancePay'] + self._get_lumpsum(private_pension_capital))
+        
+        years, wealth, expenses, legal_pension = self._wealth_withdraw(
+            years, wealth, expenses, private_pension, legal_pension, income_tax_rate, 
+            capital_tax_rate, inflation, performance
+        )
+        
+        return years, wealth, expenses
+
+    def legal_retirement(self, start, end, wealth, expenses, inflation, performance):
+        private_pension = self.config['Early.PrivatePension.Pension'] / MONTH
+        expenses -= self.config['Legal.SpendingCut'] / MONTH
+        income_tax_rate = self.config['General.IncomeTaxRate']
+        capital_tax_rate = self.config['General.CapitalTaxRate']
+        legal_pension = self.config['Legal.LegalPension'] / MONTH
+        years = end - start
+        
+        years, wealth, expenses, legal_pension = self._wealth_withdraw(
+            years, wealth, expenses, legal_pension, private_pension, income_tax_rate, 
+            capital_tax_rate, inflation, performance
+        )
+        
+        return years, wealth, legal_pension, expenses
+
+    def _get_lumpsum(self, private_pension_capital):
+        lumpsum = 0.0
+        if self.config['Early.PrivatePension.Available'] != 1:
+            return lumpsum
+        
+        capital_percentage = self.config['Early.PrivatePension.Capital.Percentage']
+        lumpsum_tax = self.config['Early.PrivatePension.Capital.Tax']
+        
+        lumpsum = private_pension_capital * capital_percentage * (1.0 - lumpsum_tax)
+        return lumpsum
+
+    def _wealth_withdraw(self, years, wealth, expenses, private_pension, legal_pension, income_tax_rate, capital_tax_rate, inflation, performance):
+        steps = int(years * MONTH)
+        inflation = self._to_monthly_list(years, inflation)
+        performance = self._to_monthly_list(years, performance)
+        
+        if len(inflation) == 0 or len(performance) == 0 or wealth <= 0 or years <= 0:
+            return 0.0, wealth
+        
+        for step in range(1, steps + 1):
+            expenses *= (1.0 + inflation[step - 1])
+            wealth = (wealth - (expenses - private_pension - legal_pension)) * (1.0 + performance[step - 1])
+            
+            if step % MONTH == 0:
+                legal_pension *= (1.0 + inflation[step - 1]) ** MONTH
+                wealth -= ((private_pension + legal_pension) * income_tax_rate + wealth * capital_tax_rate)
+            
+            if wealth <= 0:
+                return step / MONTH, wealth, expenses, legal_pension
+        
+        return steps / MONTH, wealth, expenses, legal_pension
+
+    def renew_mortgage(self, income, wealth, mortgage):
+        amortization = self.amortization(income, wealth, mortgage)
+        
+        if amortization >= wealth:
+            return 0, wealth
+        
+        wealth -= amortization
+        return 1, wealth
+
+    def sell_property(self, wealth, worth, mortgage):
+        return wealth + (worth - mortgage)
+
+    def buy_property(self, income, wealth, worth, mortgage):
+        amortization = self.amortization(income, wealth, mortgage)
+        
+        mortgage -= amortization
+        mortgage = max(0, mortgage)
+        mortgage = min(0.8 * worth, mortgage)
+        wealth -= (worth - mortgage)
+        return wealth
+
+    def amortization(self, income, wealth, mortgage):
+        sustainability = self.config['PROPERTY_AFFORDABILITY_SUSTAINABILITY']
+        mortgage_interest = self.config['PROPERTY_AFFORDABILITY_MORTAGEINTEREST']
+        capital_contribution = self.config['PROPERTY_AFFORDABILITY_CAPITALCONTRIBUTION']
+        extra_costs = self.config['PROPERTY_AFFORDABILITY_EXTRACOSTS']
+        
+        if not self._positive("amortization", income, wealth, mortgage, sustainability, capital_contribution, extra_costs):
+            return -1
+        if not self._not_null("amortization for Properties.Affordability.MortgageInterest", mortgage_interest):
+            return -1
+        
+        amortization = min(mortgage, mortgage - (sustainability * (income + wealth * capital_contribution) - extra_costs) / mortgage_interest)
+        return max(amortization, 0)
+
+    def _positive(self, text, *values):
+        for value in values:
+            if value < 0:
+                print(f"Invalid negative value: {value:.2f} found! {text}")
+                return False
+        return True
+
+    def _not_null(self, text, *values):
+        for value in values:
+            if value == 0:
+                print(f"Invalid zero value in method {text} found!")
+                return False
+        return True
+
+    def _to_monthly(self, value):
+        return (1.0 + value) ** (1.0 / MONTH) - 1.0
+
+    def _to_monthly_list(self, years, input_list):
+        if years <= 0 or not self._positive(f"Years: {years} is greater than the available input values {len(input_list)}.", (len(input_list) - years)):
+            return []
+        
+        array = [0.0] * int(years * MONTH)
+        for i in range(int(years)):
+            for j in range(12):
+                array[i * MONTH + j] = self._to_monthly(input_list[i])
+        
+        rest = int(years * MONTH % MONTH)
+        for i in range(rest):
+            array[int(years * MONTH) + i] = self._to_monthly(input_list[int(years)])
+        
+        return array
+
+    def test_to_monthly(self, *args):
+        return self._to_monthly(*args)
+
+    def test_wealth_withdraw(self, *args):
+        return self._wealth_withdraw(*args)

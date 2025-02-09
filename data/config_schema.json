@@ -1,0 +1,135 @@
+"$schema": "http://json-schema.org/draft-07/schema#",
+"type": "object",
+"properties": {
+    "General": {
+        "type": "object",
+        "properties": {
+            "Age": { "type": "number" },
+            "Wealth": { "type": "number" },
+            "PrivatePensionCapital": { "type": "number", "default": 0},
+            "IncomeTaxRate": { "type": "number" },
+            "CapitalTaxRate": { "type": "number" }
+        },
+        "required": ["Age", "Wealth", "IncomeTaxRate", "CapitalTaxRate"]
+    },
+    "Before": {
+        "type": "object",
+        "properties": {
+            "Monthly": {
+                "type": "object",
+                "properties": {
+                    "Savings": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "patternProperties": {
+                                "^[0-9]+$": { "type": "number" }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "PrivatePensionContribution": { "type": "number" },
+                    "Spending": { "type": "number" }
+                },
+                "required": ["Savings", "PrivatePensionContribution", "Spending"]
+            },
+            "PrivatePensionInterest": { "type": "number" }
+        },
+        "required": ["Monthly", "PrivatePensionInterest"]
+    },
+    "Early": {
+        "type": "object",
+        "properties": {
+            "Age": { "type": "number" },
+            "SeverancePay": { "type": "number" },
+            "SpendingCut": { "type": "number" },
+            "PrivatePension": {
+                "type": "object",
+                "properties": {
+                    "Capital": {
+                        "type": "object",
+                        "properties": {
+                            "Percentage": { "type": "number" },
+                            "Tax": { "type": "number" }
+                        },
+                        "required": ["Percentage", "Tax"]
+                    },
+                    "PensionConversionRate": { "type": "number" }
+                },
+                "required": ["Capital", "PensionConversionRate"]
+            }
+        },
+        "required": ["Age", "SeverancePay", "SpendingCut", "PrivatePension"]
+    },
+    "Legal": {
+        "type": "object",
+        "properties": {
+            "Age": { "type": "number" },
+            "SpendingCut": { "type": "number" },
+            "LegalPension": { "type": "number" }
+        },
+        "required": ["Age", "SpendingCut", "LegalPension"]
+    },
+    "RealEstate": {
+        "type": "object",
+        "properties": {
+            "Rent": { "type": "number" },
+            "Affordability": {
+                "type": "object",
+                "properties": {
+                    "Sustainability": { "type": "number" },
+                    "MortageInterest": { "type": "number" },
+                    "CapitalContribution": { "type": "number" },
+                    "ExtraCosts": { "type": "number" }
+                },
+                "required": ["Sustainability", "MortageInterest", "CapitalContribution", "ExtraCosts"]
+            },
+            "Prpoerties": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "Id": { "type": "string" },
+                        "Worth": { "type": "number" },
+                        "Buy": { "type": "number" },
+                        "Sell": { "type": "number" },
+                        "Mortage": { "type": "number" },
+                        "MortageInterest": { "type": "number" },
+                        "MortagetStart": { "type": "number" },
+                        "MortageTerm": { "type": "number" }
+                    },
+                    "required": ["Id", "Worth", "Buy", "Sell", "Mortage", "MortageInterest", "MortagetStart", "MortageTerm"]
+                }
+            }
+        },
+        "required": ["Rent", "Affordability", "Prpoerties"]
+    },
+    "Calculation": {
+        "type": "object",
+        "properties": {
+            "Method": { "type": "string" },
+            "Single": {
+                "type": "object",
+                "properties": {
+                    "Max": { "type": "number" },
+                    "Inflation": { "type": "number" },
+                    "Performance": { "type": "number" }
+                },
+                "required": ["Max", "Inflation", "Performance"]
+            },
+            "Historical": {
+                "type": "object",
+                "properties": {
+                    "Max": { "type": "number" },
+                    "portfolioBalance": { "type": "number" },
+                    "historicalData": { "type": "string" }
+                },
+                "required": ["Max", "portfolioBalance", "historicalData"]
+            }
+        },
+        "required": ["Method", "Single", "Historical"]
+    }
+},
+"required": ["General", "Before", "Early", "Legal", "RealEstate", "Calculation"]
+}
+
