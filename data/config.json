@@ -11,7 +11,7 @@
     "Pension": {
         "Private": {
             "Capital": 1000000.0,
-            "Lumpsum": 0.5,
+            "LumpsumRatio": 0.5,
             "LumpsumTaxrate": 0.01,
             "ConversionRate": 0.042, 
             "Contribution": 

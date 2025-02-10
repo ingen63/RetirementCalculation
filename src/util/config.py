@@ -11,6 +11,7 @@ class Config:
     GENERAL_START = "General.Start"
     GENERAL_END = "General.End"
     GENERAL_AGE = "General.Age"
+    GENERAL_MAXPERIOD = "General.MaxPeriod"
     GENERAL_WEALTH = "General.Wealth"
     GENERAL_INCOMETAXRATE = "General.IncomeTaxRate"
     GENERAL_CAPITALTAXRATE = "General.CapitalTaxRate"
@@ -18,11 +19,13 @@ class Config:
     PENSION = "Pension"
     PENSION_PRIVATE = "Pension.Private"
     PENSION_PRIVATE_CAPITAL = "Pension.Private.Capital"
+    PENSION_PRIVATE_LUMPSUMRATIO = "Pension.Private.LumpsumRatio"
     PENSION_PRIVATE_LUMPSUM = "Pension.Private.Lumpsum"
     PENSION_PRIVATE_LUMPSUMTAXRATE = "Pension.Private.LumpsumTaxrate"
     PENSION_PRIVATE_CONVERSIONRATE = "Pension.Private.ConversionRate"
     PENSION_PRIVATE_CONTRIBUTION = "Pension.Private.Contribution"
     PENSION_PRIVATE_INTEREST = "Pension.Private.Interest"
+    PENSION_PRIVATE_PENSION = "Pension.Private.Pension"
     PENSION_LEGAL = "Pension.Legal"
 
     BEFORE = "Before"
@@ -59,13 +62,18 @@ class Config:
     CALCULATION_HISTORICAL_PORTFOLIOBALANCE = "Calculation.Historical.portfolioBalance"
     CALCULATION_HISTORICAL_HISTORICALDATA = "Calculation.Historical.historicalData"
 
-    __monthly_lists = {BEFORE_SAVINGS : False, PENSION_PRIVATE_CONTRIBUTION : False, PENSION_PRIVATE_INTEREST : False, CALCULATION_SINGLE_INFLATION : True, CALCULATION_SINGLE_PERFORMANCE : True }
+    __monthly_lists = {BEFORE_SAVINGS : False, 
+                       PENSION_PRIVATE_CONTRIBUTION : False, 
+                       PENSION_PRIVATE_INTEREST : False, 
+                       CALCULATION_SINGLE_INFLATION : True, 
+                       CALCULATION_SINGLE_PERFORMANCE : True,
+                       EARLY_SPENDING : False, 
+                       LEGAL_SPENDING : False
+                    }
+    
     __data = {}
     __initialized = False
-
-    #def __init__(self):
-    #        self.__data = {} 
-    #    
+ 
             
     def load(self, file_path):
         with open(file_path, 'r') as file:
@@ -96,13 +104,22 @@ class Config:
         
         monthly_lists = self.__monthly_lists
         for key in monthly_lists:
-            self.convert_to_monthly_list(key,monthly_lists[key])
+            if key == Config.EARLY_SPENDING : 
+                self.convert_to_monthly_list(key,monthly_lists[key], self.getValue(Config.EARLY_AGE))
+            elif key == Config.LEGAL_SPENDING : 
+                self.convert_to_monthly_list(key,monthly_lists[key], self.getValue(Config.LEGAL_AGE))
+            else :
+                self.convert_to_monthly_list(key,monthly_lists[key])
                                         
 
         if self.getValue(Config.CALCULATION_METHOD) == "Single":      
            self.setValue(Config.CALCULATION_INFLATION, self.getValue(Config.CALCULATION_SINGLE_INFLATION))
            self.setValue(Config.CALCULATION_PERFORMANCE, self.getValue(Config.CALCULATION_SINGLE_PERFORMANCE))
 
+
+        # set the maximum simulation period
+        period = self.getValue(Config.GENERAL_END) - self.getValue(Config.GENERAL_START)
+        self.setValue(Config.GENERAL_MAXPERIOD, Utils.years_to_months(period))
         self.setSimulationTime(0)
         return self
         
@@ -169,15 +186,24 @@ class Config:
         keys = path.split('.')
         current = self.__data
         
-        for key in keys:
-            if key == keys[-1]:
-                old_value =  current[key] if key in current else None
-                current[key] = value
+        
+        for i in range(len(keys)):
+           # logging.debug(f"i: {i} key: {keys[i]} keys: {keys} current: {current} __data: {self.__data}")
+             
+            if i < len(keys)-1:
+                if (keys[i] in current): # key exists in current
+                    current = current[keys[i]]
+                else: # key does not exist in current create a new dictionary
+                    current[keys[i]] = {}
+                    current = current[keys[i]]
+            else:
+                old_value = None
+                if (keys[i] in current): # key exists in current
+                    old_value = current[keys[i]]
+                current[keys[i]] = value
+             #   logging.debug(f"i: {i} key: {keys[i]} keys: {keys} current: {current} __data: {self.__data}")
                 return old_value
             
-            if key not in current:
-                current[key] = {}
-            current = current[key]
 
     def exists(self, path):
         """
@@ -244,26 +270,29 @@ class Config:
   
     
     
-    def convert_to_monthly_list(self, input_key, monthly_rate = False):
+    def convert_to_monthly_list(self, input_key, monthly_rate, start_year=0):
 
         year = int(self.getValue(Config.GENERAL_START,2013))
         age = float(self.getValue(Config.GENERAL_AGE, 50))
         input = self.getValue(input_key,{year : 0})
+        if start_year == 0 :
+            start_year = year
         output = {}
 
-        input = input if isinstance(input, dict) else {year : input}
+        input = input if isinstance(input, dict) else {start_year : input}
         for key in input: 
-            int_key = int(key) if isinstance(key,str) else key     # if key is a string convert it to int
-            offset = year if int_key > 200 else age                 # nobody has an age over 200 so the offset is the actual year
-            new_key = Utils.years_to_months(int_key - offset) 
+            float_key = float(key) if isinstance(key,str) else key     # if key is a string convert it to float
+            offset = year if float_key > 200 else age                    # nobody has an age over 200 so the offset is the actual year
+            new_key = Utils.years_to_months(float_key - offset) 
             value = input[key]
             value = (1+value)**(1.0/Utils.MONTH)-1.0 if (monthly_rate) else value        
-            output[max(0,int(new_key))] = value
+            output[max(0,new_key)] = value
               
         self.setValue(input_key, output)
         
         return output  
       
+    
 
 
     def yearly_list_callback(self, key):
@@ -301,10 +330,6 @@ class Config:
 
         return {int(key - offset): value}
 
-        
-                 
-                 
-         
          
          
     def list_available_keys(self, data, prefix):
@@ -312,7 +337,7 @@ class Config:
 
         for key in data:
             full_key = f"{prefix}.{key}" if prefix else key
-            logging.debug(f"Found key: {full_key}")
+            # logging.debug(f"Found key: {full_key}")
             if isinstance(data[key], dict):
                 keys.append(full_key)
                 keys.extend(self.list_available_keys(data[key], full_key))

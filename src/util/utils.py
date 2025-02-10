@@ -29,36 +29,6 @@ class Utils:
     
 
     
-    
-    @staticmethod
-    def __create_monthly_list(months, input_dict, monthly_rate = False):
-         
-        if input_dict is None:
-            return []
-        
-        if months <= 0 or math.ceil(years) != len(input_list):
-            logging.info(f"Number of month {months} is <0. Set to 0")
-            return []
-        
-        monthly_list = [0.0] * months
-        year = 0   
-        rate = 0.0
-        
-        #logging.debug(f"Years: {years}, Months: {months}, Rate: {rate}")
-        for month in range(months):
-
-            if month % Utils.MONTH == 0:
-                rate = (1.0+input_list[year])**(1.0/Utils.MONTH)-1.0 if (monthly_rate) else input_list[year]
-            
-        #   logging.debug(f"Month: {month}, Year: {year}, Rate: {rate}")    
-            monthly_list[month] = rate
-            
-            if (month+1) % Utils.MONTH == 0:
-                year += 1
-                     
-        return monthly_list
-    
-    
     @staticmethod
     def getActualValue(month, input_dict):
         

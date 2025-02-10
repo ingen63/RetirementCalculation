@@ -82,11 +82,11 @@ def test_month_to_years():
 
 
 def test_getActualValue():
-    input_dict = {0: 10, 12: 20, 24: 30}
+    input_dict = {5: 10, 12: 20, 24: 30}
  
     assert Utils.getActualValue(-1, input_dict) == 0
-    assert Utils.getActualValue(0, input_dict) == 10
-    assert Utils.getActualValue(1, input_dict) == 10
+    assert Utils.getActualValue(0, input_dict)  == 0
+    assert Utils.getActualValue(5, input_dict)  == 10
     assert Utils.getActualValue(11, input_dict) == 10
     assert Utils.getActualValue(12, input_dict) == 20
     assert Utils.getActualValue(13, input_dict) == 20
