@@ -1,65 +1,39 @@
 
+from src.util.config import Config
 from src.util.utils import Utils
     
 
-def test_convert_to_monthly_list_positive_years():
-    years = 2
-    input_list = [1200, 2400]
-    expected_output = [1200.0] * 12 + [2400.0] * 12
-    monthly_list = Utils.convert_to_monthly_list(years, input_list, False)
-    assert monthly_list == expected_output
+
+
+def test_convert_to_monthly_list():
+   
+    config = Config()
+    config.setValue(Config.GENERAL_START,1000)
+    config.setValue(Config.GENERAL_AGE,50)
     
-
-    years = 2.5
-    input_list = [100, 200, 300]
-    expected_output = [100.0] * 12 + [200.0] * 12 + [300] * 6
-    monthly_list = Utils.convert_to_monthly_list(years, input_list, False)
-    assert monthly_list == expected_output
-
-    years = 2+8/12+0.0000000001
-    input_list = [100, 200, 300]
-    expected_output = [100.0] * 12 + [200.0] * 12 + [300] * 8
-    monthly_list = Utils.convert_to_monthly_list(years, input_list)
-    assert monthly_list == expected_output
-
-
-def test_convert_to_monthly_list_zero_years():
-    years = 0
-    input_list = [1200, 2400]
-    expected_output = []
-    monthly_list = Utils.convert_to_monthly_list(years, input_list)
-    assert monthly_list == expected_output
-
-
-def test_convert_to_monthly_list_negative_years():
-    years = -1
-    input_list = [1200, 2400]
-    expected_output = []
-    monthly_list = Utils.convert_to_monthly_list(years, input_list)
-    assert monthly_list == expected_output
-
-
-def test_convert_to_monthly_list_years_exceeding_input_list():
-    years = 3
-    input_list = [1200, 2400]
-    expected_output = []
-    monthly_list = Utils.convert_to_monthly_list(years, input_list)
-    assert monthly_list == expected_output
+    input_list = {1200 :12, 2400: 24}
+    expected_output = {200*12 : 12, 1400*12 : 24} 
+    __test_convert_to_monthly_list(config, input_list, expected_output) 
     
-    years = 2.0000000001
-    input_list = [1200, 2400]
-    expected_output = []
-    monthly_list = Utils.convert_to_monthly_list(years, input_list)
-    assert monthly_list == expected_output
+    input_list = {51 :51, 1002: 24}  # Mixed input age and years
+    expected_output = {1*12 : 51, 2*12 : 24} 
+    __test_convert_to_monthly_list(config, input_list, expected_output)   
+    
+    input_list = {1200 :12}
+    expected_output = {200*12 : 12} 
+    __test_convert_to_monthly_list(config, input_list, expected_output)  
 
-
-def test_convert_to_monthly_list_empty_input_list():
-    years = 2
-    input_list = []
-    expected_output = []
-    monthly_list = Utils.convert_to_monthly_list(years, input_list)
-    assert monthly_list == expected_output
-  
+    input_list = {}
+    expected_output = {} 
+    __test_convert_to_monthly_list(config, input_list, expected_output)  
+    
+    config.convert_to_monthly_list(None, False)
+    
+    
+def __test_convert_to_monthly_list(config, input, expected):
+    config.setValue('Test',input)
+    monthly_list = config.convert_to_monthly_list('Test', False)
+    assert monthly_list == expected
    
         
  
@@ -94,7 +68,7 @@ def test_years_to_months():
         assert Utils.years_to_months(0) == 0
         assert Utils.years_to_months(-1) == 0
         assert Utils.years_to_months(1.75) == 21
-        assert Utils.years_to_months(6.99999/12) == 6
+        assert Utils.years_to_months(6.99999/12) == 7
 
 def test_month_to_years():
         assert Utils.month_to_years(12) == 1
@@ -105,3 +79,17 @@ def test_month_to_years():
         assert Utils.month_to_years(1) == 1/12
         assert Utils.month_to_years(2) == 2/12
         
+
+
+def test_getActualValue():
+    input_dict = {0: 10, 12: 20, 24: 30}
+ 
+    assert Utils.getActualValue(-1, input_dict) == 0
+    assert Utils.getActualValue(0, input_dict) == 10
+    assert Utils.getActualValue(1, input_dict) == 10
+    assert Utils.getActualValue(11, input_dict) == 10
+    assert Utils.getActualValue(12, input_dict) == 20
+    assert Utils.getActualValue(13, input_dict) == 20
+    assert Utils.getActualValue(24, input_dict) == 30
+    assert Utils.getActualValue(25, input_dict) == 30
+    assert Utils.getActualValue(36, {}) == 0

@@ -28,27 +28,31 @@ class Calculations:
         
         # monthly calculation for investment performance
         wealth = data.getValue(Config.GENERAL_WEALTH)
-        savings = data.getValue(Config.BEFORE_MONTHLY_SAVINGS)
+        savings = data.getValue(Config.BEFORE_SAVINGS)
         performance =  data.getValue(Config.CALCULATION_PERFORMANCE)
+        pk_capital = data.getValue(Config.PENSION_PRIVATE_CAPITAL)
+        pk_contribution =  data.getValue(Config.PENSION_PRIVATE_CONTRIBUTION)
+        pk_interest = data.getValue(Config.PENSION_PRIVATE_INTEREST)
 
     
-        (actual_year,actual_month) = data.getSimulationTime()
+        actual_month = data.getSimulationTime()
         months = actual_month+Utils.years_to_months(years_until_retirement)
         
-        logging.debug(f"Actual Year: {actual_year}, Actual Month: {actual_month}, Years: {years_until_retirement}, Months: {months}")
         # monthly calculation for wealth performance
-        for month in range(actual_month, months):
-            wealth = (wealth + savings) * (1.0 + performance[month])
+        for month in range(actual_month, months): 
+            wealth = (wealth + Utils.getActualValue(month,savings)) * (1.0 + Utils.getActualValue(month, performance))
+            pk_capital += Utils.getActualValue(month,pk_contribution)
+            
+             
+            if month % Utils.MONTH == 11 : # Interest is applied once a year at december
+                pk_capital  = pk_capital * (1.0 + Utils.getActualValue(month,pk_interest))
+                
+            # logging.debug(f"Month: {month}, Wealth: {wealth}, Private Pension Capital: {pk_capital}")    
 
-        # yearly calculation for private pension performance
-        private_pension_capital = data.getValue(Config.GENERAL_PRIVATEPENSIONCAPITAL)
-        private_pension_contribution =  data.getValue(Config.BEFORE_MONTHLY_PRIVATEPENSIONCONTRIBUTION) * Utils.MONTH
-        private_pension_interest = data.getValue(Config.BEFORE_PRIVATEPENSIONINTEREST)
-        for year in range(int(years_until_retirement)):
-            private_pension_capital = ( private_pension_capital + private_pension_contribution) * (1.0 + private_pension_interest)
+        
 
         data.setValue(Config.GENERAL_WEALTH, wealth)
-        data.setValue(Config.GENERAL_PRIVATEPENSIONCAPITAL, private_pension_capital)
+        data.setValue(Config.PENSION_PRIVATE_CAPITAL, pk_capital)
         data.setSimulationTime(month)
 
 

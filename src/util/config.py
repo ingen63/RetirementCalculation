@@ -8,6 +8,8 @@ class Config:
 
 
     GENERAL = "General"
+    GENERAL_START = "General.Start"
+    GENERAL_END = "General.End"
     GENERAL_AGE = "General.Age"
     GENERAL_WEALTH = "General.Wealth"
     GENERAL_INCOMETAXRATE = "General.IncomeTaxRate"
@@ -24,8 +26,7 @@ class Config:
     PENSION_LEGAL = "Pension.Legal"
 
     BEFORE = "Before"
-    BEFORE_MONTHLY = "Before.Monthly"
-    BEFORE_MONTHLY_SAVINGS = "Before.Monthly.Savings"
+    BEFORE_SAVINGS = "Before.Savings"
 
     EARLY = "Early"
     EARLY_AGE = "Early.Age"
@@ -43,16 +44,14 @@ class Config:
     REALESTATE_AFFORDABILITY_MORTAGEINTEREST = "RealEstate.Affordability.MortageInterest"
     REALESTATE_AFFORDABILITY_CAPITALCONTRIBUTION = "RealEstate.Affordability.CapitalContribution"
     REALESTATE_AFFORDABILITY_EXTRACOSTS = "RealEstate.Affordability.ExtraCosts"
-    REALESTATE_PRPOERTIES = "RealEstate.Prpoerties"
+    REALESTATE_PROPERTIES = "RealEstate.Properties"
 
     CALCULATION = "Calculation"
     CALCULATION_METHOD = "Calculation.Method"
     CALCULATION_INFLATION = "Calculation.Inflation"
     CALCULATION_PERFORMANCE = "Calculation.Performance"
-    CALCULATION_ACTUAL_YEAR = "Calculation.Actual.Year"
     CALCULATION_ACTUAL_MONTH = "Calculation.Actual.Month"
     CALCULATION_SINGLE = "Calculation.Single"
-    CALCULATION_SINGLE_MAX = "Calculation.Single.Max"
     CALCULATION_SINGLE_INFLATION = "Calculation.Single.Inflation"
     CALCULATION_SINGLE_PERFORMANCE = "Calculation.Single.Performance"
     CALCULATION_HISTORICAL = "Calculation.Historical"
@@ -60,10 +59,13 @@ class Config:
     CALCULATION_HISTORICAL_PORTFOLIOBALANCE = "Calculation.Historical.portfolioBalance"
     CALCULATION_HISTORICAL_HISTORICALDATA = "Calculation.Historical.historicalData"
 
+    __monthly_lists = {BEFORE_SAVINGS : False, PENSION_PRIVATE_CONTRIBUTION : False, PENSION_PRIVATE_INTEREST : False, CALCULATION_SINGLE_INFLATION : True, CALCULATION_SINGLE_PERFORMANCE : True }
+    __data = {}
+    __initialized = False
 
-    def __init__(self):
-            self.__data = {} 
-        
+    #def __init__(self):
+    #        self.__data = {} 
+    #    
             
     def load(self, file_path):
         with open(file_path, 'r') as file:
@@ -88,17 +90,23 @@ class Config:
         Returns:
             None
         """
+        if self.__initialized: 
+            raise Exception("Object was already initialized.")
+        self.__initialized = True
+        
+        monthly_lists = self.__monthly_lists
+        for key in monthly_lists:
+            self.convert_to_monthly_list(key,monthly_lists[key])
+                                        
 
-
-        if self.getValue(Config.CALCULATION_METHOD) == "Single":
-           years = self.getValue(Config.CALCULATION_SINGLE_MAX)-self.getValue(Config.GENERAL_AGE)
-           inflation = self.getValue(Config.CALCULATION_SINGLE_INFLATION)
-           performance = self.getValue(Config.CALCULATION_SINGLE_PERFORMANCE)
-           self.setValue(Config.CALCULATION_INFLATION, Utils.convert_to_monthly_list(years,Utils.create_yearly_list(years,inflation), True))
-           self.setValue(Config.CALCULATION_PERFORMANCE, Utils.convert_to_monthly_list(years,Utils.create_yearly_list(years, performance),True))
+        if self.getValue(Config.CALCULATION_METHOD) == "Single":      
+           self.setValue(Config.CALCULATION_INFLATION, self.getValue(Config.CALCULATION_SINGLE_INFLATION))
+           self.setValue(Config.CALCULATION_PERFORMANCE, self.getValue(Config.CALCULATION_SINGLE_PERFORMANCE))
 
         self.setSimulationTime(0)
+        return self
         
+    
      
     def setSimulationTime(self, month):
         """
@@ -111,7 +119,6 @@ class Config:
         calculates the corresponding month value using the `years_to_months` 
         utility function.
         """
-        self.setValue(Config.CALCULATION_ACTUAL_YEAR, Utils.month_to_years(month))
         self.setValue(Config.CALCULATION_ACTUAL_MONTH, int(month))
     
         
@@ -120,11 +127,11 @@ class Config:
         Retrieves the simulation time.
 
         Returns:
-            tuple: A tuple containing the actual year and month for the calculation.
+            the actual month for the calculation. It starts with 0.
         """
-        return self.getValue(Config.CALCULATION_ACTUAL_YEAR), self.getValue(Config.CALCULATION_ACTUAL_MONTH)        
+        return int(self.getValue(Config.CALCULATION_ACTUAL_MONTH))  
 
-    def getValue(self, path):
+    def getValue(self, path, defaultValue=None):
         """
         Retrieve a value from a nested dictionary using a dot-separated path.
         Args:
@@ -133,6 +140,9 @@ class Config:
         The value corresponding to the specified path if found, otherwise None.
          """
  
+        if path == '' or path is None:
+            return None
+        
         keys = path.split('.')
         current =  self.__data
         try:
@@ -140,8 +150,8 @@ class Config:
                 current = current[key]
             return current
         except KeyError:
-            logging.debug(f"KeyError: {path} not found")
-            return None
+        #    logging.debug(f"KeyError: {path} not found returning default value: {defaultValue}")
+            return defaultValue
 
     def setValue(self, path, value):
         """
@@ -162,7 +172,6 @@ class Config:
         for key in keys:
             if key == keys[-1]:
                 old_value =  current[key] if key in current else None
-            #    logging.debug(f"Setting value at {path} to {key}: {value}. Old value was {old_value}")
                 current[key] = value
                 return old_value
             
@@ -210,7 +219,7 @@ class Config:
         for key in keys:
             if key == keys[-1]:
                 old_value =  current[key] if key in current else None
-                logging.debug(f"Deleting value at {path} with key {key}:{old_value}")
+             #   logging.debug(f"Deleting value at {path} with key {key}:{old_value}")
                 del current[key]
                 return old_value
                 
@@ -232,8 +241,72 @@ class Config:
         data = Config()
         data.__data =   data_copy
         return data
-
   
+    
+    
+    def convert_to_monthly_list(self, input_key, monthly_rate = False):
+
+        year = int(self.getValue(Config.GENERAL_START,2013))
+        age = float(self.getValue(Config.GENERAL_AGE, 50))
+        input = self.getValue(input_key,{year : 0})
+        output = {}
+
+        input = input if isinstance(input, dict) else {year : input}
+        for key in input: 
+            int_key = int(key) if isinstance(key,str) else key     # if key is a string convert it to int
+            offset = year if int_key > 200 else age                 # nobody has an age over 200 so the offset is the actual year
+            new_key = Utils.years_to_months(int_key - offset) 
+            value = input[key]
+            value = (1+value)**(1.0/Utils.MONTH)-1.0 if (monthly_rate) else value        
+            output[max(0,int(new_key))] = value
+              
+        self.setValue(input_key, output)
+        
+        return output  
+      
+
+
+    def yearly_list_callback(self, key):
+        """
+        Processes a yearly list or dictionary, adjusting keys based on a general age offset.
+
+        This function retrieves a value associated with the given key and adjusts it
+        based on an age offset. If the value is a dictionary, it creates a new dictionary
+        with adjusted keys. If it's not a dictionary, it returns a single-item dictionary
+        with an adjusted key.
+
+        Args:
+            key (str): The key to retrieve the value from the configuration.
+
+        Returns:
+            dict: A dictionary with adjusted keys. If the original value was a dictionary,
+                  all keys are adjusted. If it was a single value, a dictionary with one
+                  adjusted key-value pair is returned.
+
+        Note:
+            The key adjustment is done by subtracting the general age offset from each key.
+        """
+        value  = self.getValue(key)
+        offset = round(float(self.getValue(Config.GENERAL_AGE)),2)
+        new_dict = {}  
+        if isinstance(value, dict):
+            new_dict = {}
+            for key in value.keys():
+                logging.debug(f"Key {key} Offset: {offset}")
+                new_key = float(key) - offset
+                logging.debug("Test")
+                new_dict[new_key] = value.get(key)
+                logging.debug(f"Adjusted key: {new_key} to: {value[key]}")
+            return new_dict
+
+        return {int(key - offset): value}
+
+        
+                 
+                 
+         
+         
+         
     def list_available_keys(self, data, prefix):
         keys = []
 

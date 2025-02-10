@@ -8,7 +8,7 @@ class Utils:
     MONTH = 12
 
     @staticmethod
-    def create_yearly_list(years, value):
+    def __create_yearly_list(years, value):
         """
         Create a list of yearly values.
 
@@ -27,29 +27,19 @@ class Utils:
         logging.debug(f"Creating yearly list with {years+1} years and value {value}")
         return [value] * years
     
+
+    
     
     @staticmethod
-    def convert_to_monthly_list(years, input_list, monthly_rate = False):
-        # TODO fix that it can handle partition of years correctly for now we use years + 1
-        """
-        Converts a list of yearly values to a list of monthly values.
-
-        Args:
-            years (float): The number of years
-            input_list (list): A list of yearly values to be converted to monthly values.
-            monthly_rate (bool): A flag to indicate if the input list is a list of rates or values. If True, the 
-            values are converted to rates using the formula (1+rate)^(1/12)-1. If False, the values are used as is.
-
-        Returns:
-            list: A list of monthly values for the given number of years. If the number of years until retirement
-                  is less than or equal to 0, or if the number of years exceeds the length of the input list,
-                  an empty list is returned.
-        """
-        if years <= 0 or math.ceil(years) != len(input_list):
-            logging.debug(f"Years: {years}, Length of input list: {len(input_list)}")
+    def __create_monthly_list(months, input_dict, monthly_rate = False):
+         
+        if input_dict is None:
             return []
-
-        months = Utils.years_to_months(years)
+        
+        if months <= 0 or math.ceil(years) != len(input_list):
+            logging.info(f"Number of month {months} is <0. Set to 0")
+            return []
+        
         monthly_list = [0.0] * months
         year = 0   
         rate = 0.0
@@ -68,6 +58,19 @@ class Utils:
                      
         return monthly_list
     
+    
+    @staticmethod
+    def getActualValue(month, input_dict):
+        
+        value = 0
+        for key in sorted(input_dict.keys()):   # find a better algorithm soert is n"log(n)
+            if key <= month:  # the key is less than or equal to the month so we can use it directly
+                value = input_dict[key]
+            else: 
+               break
+        return value
+            
+        
     @staticmethod
     def positive(text, *values):
         """
@@ -122,8 +125,8 @@ class Utils:
         """
         if years <= 0:
             years=0
-            
-        return int(math.floor(years * Utils.MONTH))
+
+        return round(years * Utils.MONTH)
     
     @staticmethod
     def month_to_years(month):

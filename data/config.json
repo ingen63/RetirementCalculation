@@ -1,6 +1,8 @@
 {
     "General": {
-        "Age": 50.0,
+        "Start": 2020,
+        "End": 2090,
+        "Age": 57.75,
         "Wealth": 200000.00,  
         "IncomeTaxRate": 0.1,
         "CapitalTaxRate": 0.01
@@ -12,23 +14,18 @@
             "Lumpsum": 0.5,
             "LumpsumTaxrate": 0.01,
             "ConversionRate": 0.042, 
-            "Contribution": [
+            "Contribution": 
                 {"50": 4500.0}
-            ],
-            "Interest": [
+            ,
+            "Interest": 
                 {"50": 0.06}
-            ]
         },
         "Legal": 1800.0
     },
 
     "Before": {
-        "Monthly": {
-            "Savings": [
-                {"50": 1000.0},
-                {"63": 1500.0}
-            ]
-        }
+        "Savings": 
+            {"50": 1000.0, "63": 1500}
     },
 
     "Early": {
@@ -50,7 +47,7 @@
             "CapitalContribution": 0.03,
             "ExtraCosts": 7500.0 
         },
-        "Prpoerties": [
+        "Properties": [
               {
                 "Id": "Haus",
                 "Worth":  1400000.0, 
@@ -76,12 +73,10 @@
     "Calculation": {
         "Method": "Single",
         "Single": {
-            "Max": 120.0,
             "Inflation": 0.01,
             "Performance": 0.04              
         },
         "Historical": {
-            "Max": 85.0,
             "portfolioBalance": 0.5,
             "historicalData": "./data/HistoricalRendite.csv"
         }

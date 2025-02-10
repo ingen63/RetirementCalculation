@@ -1,3 +1,4 @@
+import logging
 import pytest
 import json
 
@@ -24,26 +25,17 @@ def config():
             "Lumpsum": 0.5,
             "LumpsumTaxrate": 0.01,
             "ConversionRate": 0.042, 
-            "Contribution": [
-                {"50": 100.0},
-                {"52": 200.0}
-            ],
-            "Interest": [
-                {"50": 0.06}
-            ]
+            "Contribution":  { 50 : 10.0, 52 : 20.0},
+            "Interest":  { 50: 0.06}
         },
         "Legal": 1800.0
     },
-
+    
     "Before": {
-        "Monthly": {
-            "Savings": [
-                {"50": 10.0},
-                {"52": 20.0}
-            ]
-        }
+            "Savings":  { 50 : 1.0, 52 : 2.0}
     },
-     "Calculation": {
+    
+    "Calculation": {
         "Method": "Single",
         "Single": {
             "Max": 100,
@@ -55,39 +47,48 @@ def config():
 
     config = Config()
     config.loads(json.dumps(sample_data))
-    config.initialize()
+
     yield config
-    
+
+      
 
 def test_calculate_pre_retirement(config):
     calculations = Calculations()
     
-    data = config.clone()
-
+    data = __setup_calculate_pre_retirement(config,0.0,0.0)
     __test_calculate_pre_retirement(calculations, data, 0, 100.0,1000.0)
+
+    data = __setup_calculate_pre_retirement(config,0.0,0.0)
     __test_calculate_pre_retirement(calculations, data, -1, 100.0,1000.0)
-    data.setValue(Config.CALCULATION_SINGLE_PERFORMANCE, 0.0)
-    data.setValue(Config.PENSION_PRIVATE_INTEREST, 0.0)
+    
+    data = __setup_calculate_pre_retirement(config,0.0,0.0)
     __test_calculate_pre_retirement(calculations, data, 1, 112,1120)
-    data = config.clone()
     
-    data.setValue(Config.CALCULATION_SINGLE_PERFORMANCE, 0.0)
-    data.setValue(Config.PENSION_PRIVATE_INTEREST, 0.01)
+
+    data = __setup_calculate_pre_retirement(config,0.0,0.01)
     __test_calculate_pre_retirement(calculations, data, 2, 124,1263.712)
-    data = config.clone()
+
     
-    data.setValue(Config.CALCULATION_SINGLE_PERFORMANCE, 0.1)
-    data.setValue(Config.PENSION_PRIVATE_INTEREST, 0.01)
+    data = __setup_calculate_pre_retirement(config,0.1,0.01)   
     __test_calculate_pre_retirement(calculations, data, 2, 147.5451268,1263.712)
    
-    data = config.clone()
-    __test_calculate_pre_retirement(calculations, data, 1+6/12, 134.79618026625,1187.2)
+    data = __setup_calculate_pre_retirement(config,0.1,0.01)   
+    __test_calculate_pre_retirement(calculations, data, 1.5, 134.79618026625,1191.2)
+    
+    data = __setup_calculate_pre_retirement(config,0.1,0.01)   
+    __test_calculate_pre_retirement(calculations, data, 3, 187.580712798857,1518.74912)
+
+def __setup_calculate_pre_retirement(config, performance, interest):
+    data = config.clone().initialize()    
+    data.setValue(Config.CALCULATION_PERFORMANCE, {0 : performance})
+    data.setValue(Config.PENSION_PRIVATE_INTEREST, {0 : interest})
+    data.convert_to_monthly_list(Config.CALCULATION_PERFORMANCE, True)
+    data.convert_to_monthly_list(Config.PENSION_PRIVATE_INTEREST, False)
+    return data
     
  
 def __test_calculate_pre_retirement(calculations, data, years, expectedWealth, expectedPensionCapital):
      
- 
-    data.initialize()
     age = data.getValue(Config.GENERAL_AGE)
     calculations.calculate_pre_retirement_wealth(age+years, data)
     
