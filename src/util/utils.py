@@ -6,31 +6,10 @@ import math
 class Utils:
     
     MONTH = 12
-
-    @staticmethod
-    def __create_yearly_list(years, value):
-        """
-        Create a list of yearly values.
-
-        Args:
-            years (int): The number of years.
-            value (float): The value to be repeated yearly.
-
-        Returns:
-            list: A list of yearly values until retirement. If the number of years until retirement
-                  is less than or equal to 0, an empty list is returned.
-        """
-        if years <= 0:
-            return []
-
-        years = math.ceil(years)
-        logging.debug(f"Creating yearly list with {years+1} years and value {value}")
-        return [value] * years
-    
-
+    MAGIC_YEAR = 200
     
     @staticmethod
-    def getActualValue(month, input_dict):
+    def getActualValue(month : int, input_dict : dict) -> float:
         
         value = 0
         for key in sorted(input_dict.keys()):   # find a better algorithm soert is n"log(n)
@@ -39,7 +18,13 @@ class Utils:
             else: 
                break
         return value
-            
+        
+    @staticmethod
+    def getValue(input : dict, key, defaultValue=0.0) :
+        if key in input:
+            return input[key]
+        else:
+            return defaultValue    
         
     @staticmethod
     def positive(text, *values):
@@ -83,7 +68,12 @@ class Utils:
         return True
 
     @staticmethod
-    def years_to_months(years):
+    def adjust_for_inflation(month : int, value : float, inflation : float):
+        return value*((1+inflation)**month)
+    
+        
+    @staticmethod
+    def years_to_months(years : float) -> int:
         """
         Converts the number of years to months and rounds down to the nearest integer.
 
@@ -99,7 +89,7 @@ class Utils:
         return round(years * Utils.MONTH)
     
     @staticmethod
-    def month_to_years(month):
+    def month_to_years(month : int) -> float:
         if month <= 0:
             month=0
         return month/Utils.MONTH

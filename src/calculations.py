@@ -6,7 +6,7 @@ from src.util.utils import Utils
 class Calculations:
 
 
-    def calculate_pre_retirement(self, start, end, data):
+    def calculate_pre_retirement(self, start : float, end : float, data : Config) :
         """
         Calculate the pre-retirement wealth and private pension capital.
         This method calculates the total wealth and private pension capital
@@ -58,51 +58,71 @@ class Calculations:
         data.setSimulationTime(month+1)
 
 
-    def calculate_early_retirement(self, start, end, data):
+    def calculate_retirement(self, start, end, data):
         
         period = end - start
         if period <= 0:
             period = 0   
             
+        actual_month = data.getSimulationTime()
+        early_pension_month = Utils.years_to_months(data.offset(data.getEarlyRetirementAge()))
+        legal_pension_month = Utils.years_to_months(data.offset(data.getLegalRetirementAge()))
+               
         
         self.calculate_pension(data)  # calculate your private pension contributions and lump sum 
+         
+        self.set_spendings(data)  # calculate your expenses 
           
-        income = data.getValue(Config.PENSION_PRIVATE_PENSION)  
-            
-        inflation = data.getValue(Config.CALCULATION_INFLATION)
-        performance = data.getValue(Config.CALCULATION_PERFORMANCE)
-        expenses = data.getValue(Config.EARLY_SPENDING)
+        legal_pension = data.getValue(Config.PENSION_LEGALADJUSTED) 
+        private_pension = data.getValue(Config.PENSION_PRIVATE_PENSION)            
+        inflation = data.getValue(Config.CALCULATION_INFLATION,0.0)
+        performance = data.getValue(Config.CALCULATION_PERFORMANCE,0.0)
+        expenses = data.getValue(Config.CALCULATION_SPENDING)
         properties_expenses = self.calculate_properties_expenses(data)
         
         # deduct once a year
-        income_tax_rate = data.getValue(Config.GENERAL_INCOMETAXRATE)
-        capital_tax_rate = data.getValue(Config.GENERAL_CAPITALTAXRATE)
+        income_tax_rate = data.getValue(Config.GENERAL_INCOMETAXRATE,0.0)
+        capital_tax_rate = data.getValue(Config.GENERAL_CAPITALTAXRATE,0.0)
 
-        actual_month = data.getSimulationTime()
         months = actual_month+Utils.years_to_months(period)
         
-   
-       # logging.debug(f"Wealth: {data.getValue(Config.GENERAL_WEALTH)} Severancepay: {data.getValue(Config.EARLY_SEVERANCEPAY)} Lumpsum: {data.getValue(Config.PENSION_PRIVATE_LUMPSUM)}")    
-        wealth = data.getValue(Config.GENERAL_WEALTH) + data.getValue(Config.EARLY_SEVERANCEPAY) + data.getValue(Config.PENSION_PRIVATE_LUMPSUM)
-        
-
-        
         # monthly calculation for wealth performance
-        yearly_income = 0.0
-        max_period = data.getValue(Config.GENERAL_MAXPERIOD)
+        max_period = Utils.years_to_months(data.offset(data.getMaxPeriod()))
+        wealth = data.getValue(Config.GENERAL_WEALTH)
         previous_wealth = wealth
+        yearly_income = 0.0
         for month in range(actual_month, months): 
-            yearly_income += income
-            total_deductions = Utils.getActualValue(month,expenses)*((1+Utils.getActualValue(month, inflation))**month)  + properties_expenses
-         #   logging.debug(f"     expenses: {Utils.getActualValue(month, expenses)} InflationFactor: {((1+Utils.getActualValue(month, inflation))**month)}")
-            total_income = income  + wealth*Utils.getActualValue(month, performance)
-         #   logging.debug(f"Month: {month}, Wealth: {wealth}  total_income: {total_income:.3f} total_deductions: {total_deductions:.3f} ")    
+            # TODO inflation calculation has to be adjusted as inflation must be calculated per month as it might change from month to month.
+            
+            # check if early_retirewment starts
+            if (month == early_pension_month):   # the month you will be early retired the lumpsum payment and severence pay will be due
+                wealth = wealth + data.getValue(Config.EARLY_SEVERANCEPAY) + data.getValue(Config.PENSION_PRIVATE_LUMPSUM)
+     
+            actual_legal_pension = Utils.getActualValue(month, legal_pension)
+            actual_private_pension = Utils.getActualValue(month, private_pension)
+            actual_expenses = Utils.getActualValue(month, expenses)
+            
+            yearly_income +=  (actual_private_pension + actual_legal_pension)   # calculate ywearly income contriobution for later tax calcluations
+            
+            total_deductions =   actual_expenses + properties_expenses
+            total_income = actual_private_pension + actual_legal_pension +  wealth*Utils.getActualValue(month, performance)
+            
             wealth = wealth + total_income - total_deductions
             
             if month % Utils.MONTH == 11 : # Income Tax and Capital Tax are applied once a year at december
                 wealth = wealth  - yearly_income*income_tax_rate
                 wealth = wealth * (1.0 - capital_tax_rate)
                 yearly_income = 0.0  # reset income for the next year
+                
+                # now adjust for inflation
+                actual_inflation = Utils.getActualValue(month, inflation)
+                new_expenses = Utils.adjust_for_inflation(month, actual_expenses, actual_inflation)
+                if (new_expenses != actual_expenses ) :
+                    expenses[month+1] = new_expenses
+
+                new_legal_pension = Utils.adjust_for_inflation(month, actual_legal_pension, actual_inflation)
+                if (new_legal_pension > 0) :
+                    legal_pension[month+1] = new_legal_pension
             
             if wealth < 0 or month > max_period :
                 wealth = previous_wealth
@@ -114,55 +134,19 @@ class Calculations:
 
         data.setValue(Config.GENERAL_WEALTH, wealth)
         data.setSimulationTime(month+1)
-
-    def wealth_withdraw(
-        self,
-        years_until_retirement,
-        wealth,
-        expenses,
-        private_pension,
-        legal_pension,
-        income_tax_rate,
-        capital_tax_rate,
-        inflation,
-        performance,
-    ):
-        total_months = int(years_until_retirement * Utils.MONTH)
-        inflation = Utils.convert_to_monthly_list(years_until_retirement, inflation)
-        performance = Utils.convert_to_monthly_list(years_until_retirement, performance)
-
-        if (
-            len(inflation) == 0
-            or len(performance) == 0
-            or wealth <= 0
-            or years_until_retirement <= 0
-        ):
-            return 0.0, wealth, expenses, legal_pension
-
-        for step in range(1, total_months + 1):
-            expenses *= 1.0 + inflation[step - 1]
-            wealth = (wealth - (expenses - private_pension - legal_pension)) * (
-                1.0 + performance[step - 1]
-            )
-
-            if step % Utils.MONTH == 0:
-                legal_pension *= (
-                    1.0 + inflation[step - 1]
-                ) ** Utils.MONTH  # adjust legal pension yearly
-                wealth -= (
-                    (private_pension + legal_pension) * income_tax_rate
-                    + wealth * capital_tax_rate
-                )  # yearly tax on private pension and wealth
-
-            if wealth <= 0:  # wealth is depleted so there is need for action
-                return step / Utils.MONTH, wealth, expenses, legal_pension
-
-        return total_months / Utils.MONTH, wealth, expenses, legal_pension
-    
-    
+        
+    def set_spendings(self, data):
+        early_expenses = data.convert_to_monthly_list(Config.EARLY_SPENDING, False, data.getEarlyRetirementAge())
+        if (data.exists(Config.LEGAL_SPENDING)) :
+            legal_expenses = data.convert_to_monthly_list(Config.LEGAL_SPENDING, False, data.getLegalRetirementAge())
+        else:
+            legal_expenses = {}
+        
+        data.setValue(Config.CALCULATION_SPENDING, early_expenses | legal_expenses)
     
     def calculate_pension(self,data):
             
+        # calculate private pension    
         pk_capital = data.getValue(Config.PENSION_PRIVATE_CAPITAL)
         lumpsum_ratio = data.getValue(Config.PENSION_PRIVATE_LUMPSUMRATIO)
         lumpsum_taxrate = data.getValue(Config.PENSION_PRIVATE_LUMPSUMTAXRATE)
@@ -174,9 +158,16 @@ class Calculations:
         lumpsum = lumpsum_ratio * pk_capital * (1.0 - lumpsum_taxrate)                    # lumpsum pension  
          
     #    logging.debug(f"Pension: {pension:.2f}, Lumpsum: {lumpsum:.2f}")
-        data.setValue(Config.PENSION_PRIVATE_PENSION, pension)
+        data.setValue(Config.TMP, pension)
+        data.setValue(Config.PENSION_PRIVATE_PENSION, data.convert_to_monthly_list(Config.TMP, False, data.getEarlyRetirementAge()))  # set monthly pension
         data.setValue(Config.PENSION_PRIVATE_LUMPSUM, lumpsum)
+        
+    # calculate legal pension
+        legal_pension = data.convert_to_monthly_list(Config.PENSION_LEGAL, False, data.getLegalRetirementAge())
+        data.setValue(Config.PENSION_LEGALADJUSTED, legal_pension)
          
+         
+             
          
     def calculate_properties_expenses(self, data):
         

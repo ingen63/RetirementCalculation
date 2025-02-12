@@ -116,6 +116,8 @@ def test_convert_to_monthly_list(config):
     expected_output = {0 : i}
     monthly_list = config.convert_to_monthly_list(key,False)
     assert monthly_list == expected_output
+    monthly_list = config.convert_to_monthly_list(key,False)
+    assert monthly_list == expected_output
     
     i = i+1
     config.setValue(key, {57.75 : i})
@@ -208,8 +210,24 @@ def test_delete(config):
     config.setValue("Property.Actual.Sell", 100)
     config.setValue("Property.Actual.Worth", 200)
     assert config.delete("Property.Actual") == { 'Sell':100, 'Worth': 200 } 
+    
+def test_clear(config):
+    config.clear()
+    
+    assert config.getValue("General") is None
+    
 
+def test_offset(config):
+    config.clear()
 
+    assert config.offset(50) == 0    
+    assert config.offset(65) == 65-50
+    assert config.offset(62.76) == 62.76-50
+    assert config.offset(200) == 200-50
+    assert config.offset(201) == 201 - 2013
+    assert config.offset(2013) == 0
+    assert config.offset(2020) == 7
+    
 
 def test_clone(config):
     data_copy = config.clone()

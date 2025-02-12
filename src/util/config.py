@@ -7,6 +7,7 @@ from src.util.utils import Utils
 class Config:
 
 
+
     GENERAL = "General"
     GENERAL_START = "General.Start"
     GENERAL_END = "General.End"
@@ -27,6 +28,7 @@ class Config:
     PENSION_PRIVATE_INTEREST = "Pension.Private.Interest"
     PENSION_PRIVATE_PENSION = "Pension.Private.Pension"
     PENSION_LEGAL = "Pension.Legal"
+    PENSION_LEGALADJUSTED = "Pension.LegalAdjusted"
 
     BEFORE = "Before"
     BEFORE_SAVINGS = "Before.Savings"
@@ -36,10 +38,11 @@ class Config:
     EARLY_SEVERANCEPAY = "Early.SeverancePay"
     EARLY_SPENDING = "Early.Spending"
 
+
     LEGAL = "Legal"
     LEGAL_AGE = "Legal.Age"
     LEGAL_SPENDING = "Legal.Spending"
-
+    
     REALESTATE = "RealEstate"
     REALESTATE_RENT = "RealEstate.Rent"
     REALESTATE_AFFORDABILITY = "RealEstate.Affordability"
@@ -53,6 +56,7 @@ class Config:
     CALCULATION_METHOD = "Calculation.Method"
     CALCULATION_INFLATION = "Calculation.Inflation"
     CALCULATION_PERFORMANCE = "Calculation.Performance"
+    CALCULATION_SPENDING = "Calculation.Spending"
     CALCULATION_ACTUAL_MONTH = "Calculation.Actual.Month"
     CALCULATION_SINGLE = "Calculation.Single"
     CALCULATION_SINGLE_INFLATION = "Calculation.Single.Inflation"
@@ -62,6 +66,13 @@ class Config:
     CALCULATION_HISTORICAL_PORTFOLIOBALANCE = "Calculation.Historical.portfolioBalance"
     CALCULATION_HISTORICAL_HISTORICALDATA = "Calculation.Historical.historicalData"
 
+    TMP = "Tmp"
+
+    __DEFAULT_START_YEAR = 2013
+    __DEFAULT_START_AGE = 50.0
+    __DEFAULT_MAXPERIOD = 50*Utils.MONTH
+    __DEFAULT_LEGAL_AGE = 65.0
+    
     __monthly_lists = {BEFORE_SAVINGS : False, 
                        PENSION_PRIVATE_CONTRIBUTION : False, 
                        PENSION_PRIVATE_INTEREST : False, 
@@ -75,11 +86,11 @@ class Config:
     __initialized = False
  
             
-    def load(self, file_path):
+    def load(self, file_path : str):
         with open(file_path, 'r') as file:
             self.__data = json.load(file)
      
-    def loads(self, json_data):
+    def loads(self, json_data : str):
         self.__data = json.loads(json_data)       
     
             
@@ -105,9 +116,9 @@ class Config:
         monthly_lists = self.__monthly_lists
         for key in monthly_lists:
             if key == Config.EARLY_SPENDING : 
-                self.convert_to_monthly_list(key,monthly_lists[key], self.getValue(Config.EARLY_AGE))
+                self.convert_to_monthly_list(key,monthly_lists[key], self.getEarlyRetirementAge())
             elif key == Config.LEGAL_SPENDING : 
-                self.convert_to_monthly_list(key,monthly_lists[key], self.getValue(Config.LEGAL_AGE))
+                self.convert_to_monthly_list(key,monthly_lists[key], self.getLegalRetirementAge())
             else :
                 self.convert_to_monthly_list(key,monthly_lists[key])
                                         
@@ -148,7 +159,7 @@ class Config:
         """
         return int(self.getValue(Config.CALCULATION_ACTUAL_MONTH))  
 
-    def getValue(self, path, defaultValue=None):
+    def getValue(self, path : str, defaultValue=None) :
         """
         Retrieve a value from a nested dictionary using a dot-separated path.
         Args:
@@ -170,7 +181,7 @@ class Config:
         #    logging.debug(f"KeyError: {path} not found returning default value: {defaultValue}")
             return defaultValue
 
-    def setValue(self, path, value):
+    def setValue(self, path : str, value):
         """
         Sets the value at the specified path in the nested dictionary.
         Args:
@@ -205,7 +216,7 @@ class Config:
                 return old_value
             
 
-    def exists(self, path):
+    def exists(self, path : str):
         """
         Check if a given dot-separated path exists in the configuration data.
 
@@ -227,7 +238,7 @@ class Config:
         return True
     
     
-    def delete(self, path):
+    def delete(self, path : str):
         """
         Deletes a value from the nested dictionary based on the given dot-separated path.
         Args:
@@ -253,6 +264,15 @@ class Config:
                 return None
             current = current[key]
         return None
+    
+    def clear(self):
+        """
+        Deletes all values from the configuration data.
+        """
+        self.__data = {}
+        self.__initialized = False
+        
+
 
     
  
@@ -270,8 +290,22 @@ class Config:
   
     
     
-    def convert_to_monthly_list(self, input_key, monthly_rate, start_year=0):
+    def convert_to_monthly_list(self, input_key : str, monthly_rate : bool, start_year : float = 0.0):
+        """
+        Converts a dictionary of values to a monthly list based on the given parameters.
 
+        This function takes a dictionary of values, a boolean indicating whether the values are monthly rates, 
+        and an optional start year. It converts the dictionary to a monthly list, adjusting the keys to represent 
+        the number of months since the start year or age, and applying the monthly rate conversion if necessary.
+
+        Parameters:
+        - input_key (str): The key for the input data in the configuration.
+        - monthly_rate (bool): A boolean indicating whether the input values are monthly rates.
+        - start_year (float, optional): The start year for the conversion. Defaults to 0.0.
+
+        Returns:
+        - dict: A dictionary representing the monthly list of values.
+        """
         year = int(self.getValue(Config.GENERAL_START,2013))
         age = float(self.getValue(Config.GENERAL_AGE, 50))
         input = self.getValue(input_key,{year : 0})
@@ -282,55 +316,38 @@ class Config:
         input = input if isinstance(input, dict) else {start_year : input}
         for key in input: 
             float_key = float(key) if isinstance(key,str) else key     # if key is a string convert it to float
-            offset = year if float_key > 200 else age                    # nobody has an age over 200 so the offset is the actual year
-            new_key = Utils.years_to_months(float_key - offset) 
+            float_key = self.offset(float_key)
+         #   offset = year if float_key > Utils.MAGIC_YEAR else age  # nobody has an age over 200 so the offset is the actual year
+            new_key = Utils.years_to_months(float_key) 
             value = input[key]
             value = (1+value)**(1.0/Utils.MONTH)-1.0 if (monthly_rate) else value        
             output[max(0,new_key)] = value
-              
-        self.setValue(input_key, output)
-        
-        return output  
+
+        return output
       
-    
-
-
-    def yearly_list_callback(self, key):
+     
+    def offset(self, year: float) -> float:
         """
-        Processes a yearly list or dictionary, adjusting keys based on a general age offset.
+        Calculate the offset between a given year and either the start year or start age.
 
-        This function retrieves a value associated with the given key and adjusts it
-        based on an age offset. If the value is a dictionary, it creates a new dictionary
-        with adjusted keys. If it's not a dictionary, it returns a single-item dictionary
-        with an adjusted key.
+        This function determines whether the input represents a calendar year or an age,
+        and calculates the difference between it and the corresponding start value.
 
         Args:
-            key (str): The key to retrieve the value from the configuration.
+            year (float): The year or age to calculate the offset for.
 
         Returns:
-            dict: A dictionary with adjusted keys. If the original value was a dictionary,
-                  all keys are adjusted. If it was a single value, a dictionary with one
-                  adjusted key-value pair is returned.
-
-        Note:
-            The key adjustment is done by subtracting the general age offset from each key.
+            float: The calculated offset.
+                   If the input is greater than MAGIC_YEAR, it returns the difference
+                   between the input and the start year.
+                   Otherwise, it returns the difference between the input and the start age.
         """
-        value  = self.getValue(key)
-        offset = round(float(self.getValue(Config.GENERAL_AGE)),2)
-        new_dict = {}  
-        if isinstance(value, dict):
-            new_dict = {}
-            for key in value.keys():
-                logging.debug(f"Key {key} Offset: {offset}")
-                new_key = float(key) - offset
-                logging.debug("Test")
-                new_dict[new_key] = value.get(key)
-                logging.debug(f"Adjusted key: {new_key} to: {value[key]}")
-            return new_dict
+        if (year > Utils.MAGIC_YEAR):
+            return year - self.getStartYear()
+        else:
+            return year - self.getStartAge()
+        
 
-        return {int(key - offset): value}
-
-         
          
     def list_available_keys(self, data, prefix):
         keys = []
@@ -354,3 +371,19 @@ class Config:
             variable = key.upper().replace('.', '_')
             print(f"    {variable} = \"{key}\"")
         
+        
+        
+    def getStartYear(self) :
+        return self.getValue(Config.GENERAL_START,self.__DEFAULT_START_YEAR)
+    
+    def getStartAge(self) :
+        return self.getValue(Config.GENERAL_AGE,self.__DEFAULT_START_AGE)
+    
+    def getMaxPeriod(self) :
+        return self.getValue(Config.GENERAL_MAXPERIOD,self.__DEFAULT_MAXPERIOD)   
+     
+    def getLegalRetirementAge(self) :
+        return self.getValue(Config.LEGAL_AGE, self.__DEFAULT_LEGAL_AGE)
+    
+    def getEarlyRetirementAge(self) :
+        return self.getValue(Config.EARLY_AGE, self.__DEFAULT_LEGAL_AGE)

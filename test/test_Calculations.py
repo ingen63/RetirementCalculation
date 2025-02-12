@@ -54,6 +54,26 @@ def config():
     yield config
      
 
+
+
+CAPITAL = Config.PENSION_PRIVATE_CAPITAL 
+RATIO = Config.PENSION_PRIVATE_LUMPSUMRATIO
+CONVERSION_RATE = Config.PENSION_PRIVATE_CONVERSIONRATE
+LUMPSUM_TAX =  Config.PENSION_PRIVATE_LUMPSUMTAXRATE
+
+TEST_PENSION_SETUP = [CAPITAL, RATIO, CONVERSION_RATE, LUMPSUM_TAX]
+
+START_YEAR = Config.GENERAL_START
+END_YEAR = Config.GENERAL_END
+WEALTH = Config.GENERAL_WEALTH
+SEVERANCE_PAY = Config.EARLY_SEVERANCEPAY
+EARLY_SPENDING = Config.EARLY_SPENDING
+LEGAL_SPENDING = Config.LEGAL_SPENDING
+PERFORMANCE = Config.CALCULATION_SINGLE_PERFORMANCE
+INFLATION =  Config.CALCULATION_SINGLE_INFLATION
+
+TEST_RETIREMENT_SETUP = [START_YEAR, END_YEAR, WEALTH, SEVERANCE_PAY, EARLY_SPENDING, LEGAL_SPENDING, PERFORMANCE, INFLATION]
+
 def test_calculate_pre_retirement(config):
     calculations = Calculations()
     
@@ -81,6 +101,7 @@ def test_calculate_pre_retirement(config):
     __test_calculate_pre_retirement(calculations, data, 3, 187.580712798857,1518.74912)
 
 def __setup_calculate_pre_retirement(config, performance, interest):
+    
     data = config.clone().initialize()    
     data.setValue(Config.CALCULATION_PERFORMANCE, {0 : performance})
     data.setValue(Config.PENSION_PRIVATE_INTEREST, {0 : interest})
@@ -98,94 +119,100 @@ def __test_calculate_pre_retirement(calculations, data, years, expectedWealth, e
     assert data.getValue(Config.PENSION_PRIVATE_CAPITAL) == pytest.approx(expectedPensionCapital, abs=1e-3, rel=1e-6)
       
     
-def test_calculate_early_retirement(config):
+def test_calculate_retirement(config):
     calculations = Calculations()
-    age = config.getValue(Config.GENERAL_AGE)
+    config.setValue(Config.EARLY_AGE, 60)
+    early_retirement_age = config.getEarlyRetirementAge()
+    legal_retirement_age = config.getLegalRetirementAge()
     
-    data = __setup_pension(config,100,1,0.1,0.0)
-    __setup_calculate_early_retirement(data, age+1, 100.0, 1.0, 0.0, 0.0, 0.0)
-    __test_calculate_early_retirement(calculations, data, 1, 200-12*1)
-    __test_calculate_early_retirement(calculations, data, 1, 300-24*1)
+    data = config.clone().initialize()
+    __setup(data, TEST_PENSION_SETUP, {CAPITAL : 100, RATIO : 1.0, CONVERSION_RATE: 0.1}) 
+    __setup_calculate_retirement(data, TEST_RETIREMENT_SETUP,  {START_YEAR : early_retirement_age, END_YEAR : early_retirement_age +2, WEALTH : 100.0,  EARLY_SPENDING : 1.0} )
+    __test_calculate_retirement(calculations, data, early_retirement_age, 1, 200-12*1)
+    __test_calculate_retirement(calculations, data, early_retirement_age+1, 1, 200-24*1)
     
-    data = __setup_pension(config,240,0.5,0.1,0.0)
-    __setup_calculate_early_retirement(data, age+1, 100.0, 1, 0.0, 0.0, 0.0)
-    __test_calculate_early_retirement(calculations, data, 1, 220-12*1+12*1)
-    
-    data = __setup_pension(config,240,0.5,0.1,0.0)
-    __setup_calculate_early_retirement(data, age+1, 100.0, 2, 100.0, 0.0, 0.0)
-    __test_calculate_early_retirement(calculations, data, 1, 320-12*2+12*1)
-    
-    data = __setup_pension(config,240,0.5,0.1,0.0)
-    __setup_calculate_early_retirement(data, age+1, 100.0, 2, 100.0, 0.0, 0.0)
-    __test_calculate_early_retirement(calculations, data, 5, 320-5*12*2+5*12*1)
-    
-    data = __setup_pension(config,240,0.5,0.1,0.0)
-    __setup_calculate_early_retirement(data, age+1, 120.0, 11, 0.0, 0.0, 0.0)
-    __test_calculate_early_retirement(calculations, data, 3, 0)
-    assert data.getSimulationTime() == 36
-    
-    data = __setup_pension(config,240,0.5,0.1,0.0)
-    __setup_calculate_early_retirement(data, age+1, 120.0, 11, 0.0, 0.0, 0.0)
-    __test_calculate_early_retirement(calculations, data, 5, 0)
-    assert data.getSimulationTime() == 36
-    
-    data = __setup_pension(config,240,0.5,0.1,0.0)
-    __setup_calculate_early_retirement(data, age+1, 120.0, 11, 0.0, 0.04, 0.01)
-    __test_calculate_early_retirement(calculations, data, 5, 4.964358105212648)
-    assert data.getSimulationTime() == 36
 
-def __setup_calculate_early_retirement(data, age, wealth, spending, severance_pay,  performance, inflation):  
-    data.setValue(Config.CALCULATION_PERFORMANCE, {0 : performance})
-    data.setValue(Config.CALCULATION_INFLATION, {0 : inflation})
-    data.convert_to_monthly_list(Config.CALCULATION_PERFORMANCE, True)
-    data.convert_to_monthly_list(Config.CALCULATION_INFLATION, True)
+    data = config.clone().initialize()
+    __setup(data, TEST_PENSION_SETUP, {CAPITAL : 240, RATIO : 0.5, CONVERSION_RATE: 0.1}) 
+    __setup_calculate_retirement(data, TEST_RETIREMENT_SETUP,  {START_YEAR : early_retirement_age, END_YEAR : early_retirement_age +1, WEALTH : 100.0,  EARLY_SPENDING : 1.0} )
+    __test_calculate_retirement(calculations, data, early_retirement_age, 1, 220-12*1+12*1)
     
-    data.setValue(Config.GENERAL_WEALTH, wealth)
-    data.setValue(Config.EARLY_AGE, age)
-    data.setValue(Config.EARLY_SPENDING, spending)
-    data.setValue(Config.EARLY_SEVERANCEPAY, severance_pay)
-    data.convert_to_monthly_list(Config.EARLY_SPENDING, False, age)
-    data.setSimulationTime(Utils.years_to_months(age-data.getValue(Config.GENERAL_AGE)))
+    data = config.clone().initialize()
+    __setup(data, TEST_PENSION_SETUP, {CAPITAL : 240, RATIO : 0.5, CONVERSION_RATE: 0.1}) 
+    __setup_calculate_retirement(data, TEST_RETIREMENT_SETUP,  {START_YEAR : early_retirement_age -1, END_YEAR : early_retirement_age +2, WEALTH : 100.0,  EARLY_SPENDING : 2.0} )
+    __test_calculate_retirement(calculations, data, early_retirement_age-1 , 2, 220-12*2+12*1)
+    
+    data = config.clone().initialize()
+    __setup(data, TEST_PENSION_SETUP, {CAPITAL : 240, RATIO : 0.5, CONVERSION_RATE: 0.1}) 
+    __setup_calculate_retirement(data, TEST_RETIREMENT_SETUP,  {START_YEAR : early_retirement_age, END_YEAR : early_retirement_age +5, WEALTH : 100.0,  EARLY_SPENDING : 2.0} )
+    __test_calculate_retirement(calculations, data, early_retirement_age, 5, 220-5*12*2+5*12*1)
+    
+    data = config.clone().initialize()
+    __setup(data, TEST_PENSION_SETUP, {CAPITAL : 240, RATIO : 0.5, CONVERSION_RATE: 0.1}) 
+    __setup_calculate_retirement(data, TEST_RETIREMENT_SETUP,  {START_YEAR : early_retirement_age, END_YEAR : early_retirement_age + 20, WEALTH : 120.0,  EARLY_SPENDING : 11.0} )
+    __test_calculate_retirement(calculations, data, early_retirement_age, 3, 0)
+    assert data.getSimulationTime() == 120+24
+    
+    data = config.clone().initialize()
+    __setup(data, TEST_PENSION_SETUP, {CAPITAL : 240, RATIO : 0.5, CONVERSION_RATE: 0.1}) 
+    __setup_calculate_retirement(data, TEST_RETIREMENT_SETUP,  {START_YEAR : early_retirement_age, END_YEAR : early_retirement_age + 20, WEALTH : 120.0,  EARLY_SPENDING : 11.0} )
+    __test_calculate_retirement(calculations, data, early_retirement_age, 5, 0)
+    assert data.getSimulationTime() == 120+24
+    
+    data = config.clone().initialize()
+    __setup(data, TEST_PENSION_SETUP, {CAPITAL : 240, RATIO : 0.5, CONVERSION_RATE: 0.1})  
+    __setup_calculate_retirement(data, TEST_RETIREMENT_SETUP,  {START_YEAR : early_retirement_age, END_YEAR : early_retirement_age + 1, WEALTH : 120.0,  EARLY_SPENDING : 11.0, PERFORMANCE : 0.04, INFLATION : 0.01} )
+    __test_calculate_retirement(calculations, data, early_retirement_age, 5, 88.32919)
+    assert data.getSimulationTime() == 120+13
+
+
+def __setup_calculate_retirement(data : Config, keys : list[str],  input : dict):  
+    
+    __setup(data, keys, input)
+    
+    data.setValue(Config.CALCULATION_PERFORMANCE,data.convert_to_monthly_list(Config.CALCULATION_SINGLE_PERFORMANCE, True))
+    data.setValue(Config.CALCULATION_INFLATION,data.convert_to_monthly_list(Config.CALCULATION_SINGLE_INFLATION, False))
+    
+    data.setSimulationTime(Utils.years_to_months(data.offset( Utils.getValue(input, START_YEAR))))
+    data.setValue(Config.GENERAL_MAXPERIOD, Utils.getValue(input, END_YEAR))
     
     return data
 
-def __test_calculate_early_retirement(calculations, data, years, expectedWealth):
-     
-    age = data.getValue(Config.EARLY_AGE)
-    calculations.calculate_early_retirement(age, age+years, data)
+def __test_calculate_retirement(calculations : Calculations, data : Config, start_year : float, period : float,  expectedWealth : float):
+      
+    calculations.calculate_retirement(start_year, start_year + period, data)
     
     assert data.getValue(Config.GENERAL_WEALTH) == pytest.approx(expectedWealth, abs=1e-3, rel=1e-6)
-    
+   
+     
 def test_calculate_pension(config):
     
-    data = __setup_pension(config, 1000, 1.0, 0.0, 0.0)
+    data = config.clone().initialize()
+    __setup(data, TEST_PENSION_SETUP, {CAPITAL : 1000, RATIO: 1.0})
     __test_calculate_pension(data, 1000, 0)
     
-    data = __setup_pension(config, 1200, 0.0, 0.1, 0.0)
+    data = config.clone().initialize()
+    __setup(data,TEST_PENSION_SETUP,  {CAPITAL : 1200, CONVERSION_RATE:  0.1} )
     __test_calculate_pension(data, 0, 10)
     
-    data = __setup_pension(config, 2400, 0.5, 0.1, 0.0)
+    data = config.clone().initialize()
+    __setup(data,TEST_PENSION_SETUP,  {CAPITAL : 2400, RATIO : 0.5, CONVERSION_RATE:  0.1})
     __test_calculate_pension(data, 1200, 10)
     
-    data = __setup_pension(config, 2400, 0.5, 0.1, 0.0)
-    __test_calculate_pension(data, 1200, 10)
-    
-    data = __setup_pension(config, 2400, 0.5, 0.1, 0.01)
+    data = config.clone().initialize()
+    __setup(data,TEST_PENSION_SETUP,  {CAPITAL : 2400, RATIO : 0.5, CONVERSION_RATE:  0.1, LUMPSUM_TAX : 0.01} )
     __test_calculate_pension(data, 1200-12, 10)
     
-    data = __setup_pension(config, 0, 0, 0.0, 0.00)
+    data = config.clone().initialize()  
+    __setup(data,TEST_PENSION_SETUP,  {})
     __test_calculate_pension(data, 0, 0)
 
 
     
     
-def __setup_pension(config, capital, lumpsum_ratio,  conversion_rate, lumpsum_taxrate):
-    data = config.clone().initialize()
-    data.setValue(Config.PENSION_PRIVATE_CAPITAL, capital)
-    data.setValue(Config.PENSION_PRIVATE_LUMPSUMRATIO, lumpsum_ratio)
-    data.setValue(Config.PENSION_PRIVATE_LUMPSUMTAXRATE, lumpsum_taxrate)
-    data.setValue(Config.PENSION_PRIVATE_CONVERSIONRATE, conversion_rate)
-    return data
+def __setup(data, keys : list[str], input : dict):
+    for key in keys :
+        data.setValue(key, Utils.getValue(input, key))
     
 
 def __test_calculate_pension(data, lumpsum, pension):
@@ -194,6 +221,9 @@ def __test_calculate_pension(data, lumpsum, pension):
     
     assert data.getValue(Config.PENSION_PRIVATE_LUMPSUM) == pytest.approx(lumpsum, abs=1e-3, rel=1e-6)
     assert data.getValue(Config.PENSION_PRIVATE_PENSION) == pytest.approx(pension, abs=1e-3, rel=1e-6)
+    
+    
+
 
 
 
