@@ -3,7 +3,6 @@ import pytest
 import json
 
 from src.util.config import Config
-from src.util.utils import Utils
 
 
 
@@ -54,10 +53,8 @@ def test_load(config):
 def test_initialize(config):
         # Arrange
         config = Config()
-        config.setValue(Config.GENERAL_START,2010)
-        config.setValue(Config.GENERAL_END,2090)
         config.setValue(Config.CALCULATION_METHOD, "Single")
-        config.setValue(Config.GENERAL_AGE, 40)
+        config.setValue(Config.GENERAL_STARTAGE, 40)
         config.setValue(Config.CALCULATION_SINGLE_INFLATION, 0.01)  
         config.setValue(Config.CALCULATION_SINGLE_PERFORMANCE, 0.1)
        
@@ -68,106 +65,6 @@ def test_initialize(config):
             pytest.fail(f"Initialization failed with exception: {e}")
             
             
-                # Act
-        try:
-            config.initialize()
-            pytest.fail( "Initialization didnt fail after called twice")
-        except Exception as e:
-            pass 
-            
-        
-            
-def test_convert_to_monthly_list(config):
-      
-    key = "Test.Value"
-    i = 100
-    config.setValue(key, i)
-    expected_output = { 0 : i}
-    monthly_list = config.convert_to_monthly_list(key, False)
-    assert monthly_list == expected_output
-    
-    key = "Test.Value"
-    i = i+1
-    config.setValue(key, {"2021" :"Result"})
-    expected_output = { 12 : "Result"}
-    monthly_list = config.convert_to_monthly_list(key, False)
-    assert monthly_list == expected_output
-    
-    i = i + 1
-    config.setValue(key, i)
-    expected_output = {Utils.years_to_months(62.0-56.75) : i}
-    monthly_list = config.convert_to_monthly_list(key, False, 62.00)
-    assert monthly_list == expected_output
-    
-    i =i + 1
-    config.setValue(key, i)
-    expected_output = {Utils.years_to_months(65.0-56.75) : i}
-    monthly_list = config.convert_to_monthly_list(key, False, 65.00)
-    assert monthly_list == expected_output
-    
-    i = i+1
-    config.setValue(key, {1970 : i})
-    expected_output = {0 : i}
-    monthly_list = config.convert_to_monthly_list(key,False)
-    assert monthly_list == expected_output
-    
-    i = i+1
-    config.setValue(key, {53.3 : i})
-    expected_output = {0 : i}
-    monthly_list = config.convert_to_monthly_list(key,False)
-    assert monthly_list == expected_output
-    monthly_list = config.convert_to_monthly_list(key,False)
-    assert monthly_list == expected_output
-    
-    i = i+1
-    config.setValue(key, {57.75 : i})
-    expected_output = {12 : i}
-    monthly_list = config.convert_to_monthly_list(key,False)
-    assert monthly_list == expected_output
-    
-    i = i+1
-    config.setValue(key, {57.75+2/12 : i})
-    expected_output = {14 : i}
-    monthly_list = config.convert_to_monthly_list(key,False)
-    assert monthly_list == expected_output
-    
-    i = i+1
-    config.setValue(key, {57.75+2/12+0.5/12 : i})
-    expected_output = {14 : i}
-    monthly_list = config.convert_to_monthly_list(key,False)
-    assert monthly_list == expected_output
-    
-    i = i+1
-    config.setValue(key, {57.75+2/12+0.50001/12 : i})
-    expected_output = {15 : i}
-    monthly_list = config.convert_to_monthly_list(key,False)
-    assert monthly_list == expected_output
-    
-    i = i+1
-    config.setValue(key, {56.75 : i, 2020 : -2 })
-    expected_output = {0 : -2}
-    monthly_list = config.convert_to_monthly_list(key,False)
-    assert monthly_list == expected_output
-    
-    i = i+1
-    config.setValue(key, {57.75 : i, 2020 : -2 })
-    expected_output = {0 : -2, 12 : i}
-    monthly_list = config.convert_to_monthly_list(key, False)
-    assert monthly_list == expected_output
-           
-
-def test_setSimulationTime(config):
-        config.setSimulationTime(36)
-        actual_month = config.getSimulationTime()
-        assert actual_month == 36
-        
-        config.setSimulationTime(0)
-        actual_month = config.getSimulationTime()
-        assert actual_month == 0
-
-        config.setSimulationTime(-3)
-        actual_month = config.getSimulationTime()
-        assert actual_month == -3
         
             
 
@@ -181,6 +78,23 @@ def test_getValue(config):
     assert config.getValue("Property.Unknown",5) == 5
     
 
+def test_getActualValue(config):
+    config = config.clone()
+    config.setValue(Config.GENERAL_STARTAGE, 50)
+    config.setValue("Test.Branch.Float", 1.2)
+    config.setValue("Test.Branch.Dict", {"50" : 5000, "60.1" : 6000, "70" : 7000})
+    config.initialize()
+    
+    assert config.getActualValue((50-50)*12, "Test.Branch.Float") == 1.2
+    assert config.getActualValue((50-50)*12, "Test.Branch.Dict") == 5000
+    assert config.getActualValue((51-50)*12, "Test.Branch.Dict") == 5000
+    assert config.getActualValue((40-50)*12, "Test.Branch.Dict") is None
+    assert config.getActualValue((40-50)*12, "Test.Branch.Dict", 21.0) == 21.0
+    assert config.getActualValue((60-50)*12, "Test.Branch.Dict", 21.0) == 5000
+    assert config.getActualValue((60.1-50)*12, "Test.Branch.Dict", 21.0) == 6000
+    assert config.getActualValue((70-50)*12, "Test.Branch.Dict", 21.0) == 7000  
+    assert config.getActualValue((80-50)*12, "Test.Branch.Dict") == 7000
+    assert config.getActualValue((90-50)*12, "Test.Branch.Unknonw") is None
 
 def test_setValue(config):
     
@@ -198,7 +112,6 @@ def test_setValue(config):
     assert config.setValue(Config.CALCULATION, {}) is None
     assert config.setValue(Config.CALCULATION_SINGLE_INFLATION , 0.01) is None
     assert config.getValue(Config.CALCULATION_SINGLE_INFLATION) == 0.01
-    assert config.setValue(Config.GENERAL_AGE , 40) == 56.75
 
 
 def test_delete(config):
@@ -215,18 +128,6 @@ def test_clear(config):
     config.clear()
     
     assert config.getValue("General") is None
-    
-
-def test_offset(config):
-    config.clear()
-
-    assert config.offset(50) == 0    
-    assert config.offset(65) == 65-50
-    assert config.offset(62.76) == 62.76-50
-    assert config.offset(200) == 200-50
-    assert config.offset(201) == 201 - 2013
-    assert config.offset(2013) == 0
-    assert config.offset(2020) == 7
     
 
 def test_clone(config):

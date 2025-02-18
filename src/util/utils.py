@@ -1,30 +1,9 @@
 
-import logging
-import math
-
 
 class Utils:
     
     MONTH = 12
-    MAGIC_YEAR = 200
     
-    @staticmethod
-    def getActualValue(month : int, input_dict : dict) -> float:
-        
-        value = 0
-        for key in sorted(input_dict.keys()):   # find a better algorithm soert is n"log(n)
-            if key <= month:  # the key is less than or equal to the month so we can use it directly
-                value = input_dict[key]
-            else: 
-               break
-        return value
-        
-    @staticmethod
-    def getValue(input : dict, key, defaultValue=0.0) :
-        if key in input:
-            return input[key]
-        else:
-            return defaultValue    
         
     @staticmethod
     def positive(text, *values):
@@ -67,9 +46,6 @@ class Utils:
                 return False
         return True
 
-    @staticmethod
-    def adjust_for_inflation(month : int, value : float, inflation : float):
-        return value*((1+inflation)**month)
     
         
     @staticmethod
@@ -83,15 +59,10 @@ class Utils:
         Returns:
             int: The number of months in the given number of years.
         """
-        if years <= 0:
-            years=0
-
         return round(years * Utils.MONTH)
     
     @staticmethod
     def month_to_years(month : int) -> float:
-        if month <= 0:
-            month=0
         return month/Utils.MONTH
         
     

@@ -1,6 +1,5 @@
 import json
 import copy
-import logging
 
 from src.util.utils import Utils
 
@@ -9,10 +8,9 @@ class Config:
 
 
     GENERAL = "General"
-    GENERAL_START = "General.Start"
-    GENERAL_END = "General.End"
-    GENERAL_AGE = "General.Age"
-    GENERAL_MAXPERIOD = "General.MaxPeriod"
+    GENERAL_STARTAGE = "General.StartAge"
+    GENERAL_START_MONTH = "General.StartMonth"
+    GENERAL_ENDAGE = "General.EndAge"
     GENERAL_WEALTH = "General.Wealth"
     GENERAL_INCOMETAXRATE = "General.IncomeTaxRate"
     GENERAL_CAPITALTAXRATE = "General.CapitalTaxRate"
@@ -66,25 +64,14 @@ class Config:
     CALCULATION_HISTORICAL_PORTFOLIOBALANCE = "Calculation.Historical.portfolioBalance"
     CALCULATION_HISTORICAL_HISTORICALDATA = "Calculation.Historical.historicalData"
 
-    TMP = "Tmp"
-
-    __DEFAULT_START_YEAR = 2013
-    __DEFAULT_START_AGE = 50.0
-    __DEFAULT_MAXPERIOD = 50*Utils.MONTH
-    __DEFAULT_LEGAL_AGE = 65.0
+    DEFAULT_STARTAGE = 50.0
+    DEFAULT_MAXPERIOD = 30.0
+    DEFAULT_LEGALAGE = 65.0
     
-    __monthly_lists = {BEFORE_SAVINGS : False, 
-                       PENSION_PRIVATE_CONTRIBUTION : False, 
-                       PENSION_PRIVATE_INTEREST : False, 
-                       CALCULATION_SINGLE_INFLATION : True, 
-                       CALCULATION_SINGLE_PERFORMANCE : True,
-                       EARLY_SPENDING : False, 
-                       LEGAL_SPENDING : False
-                    }
-    
+    DEFAULT_STARTMONTH = 0
+        
     __data = {}
-    __initialized = False
- 
+    
             
     def load(self, file_path : str):
         with open(file_path, 'r') as file:
@@ -92,72 +79,29 @@ class Config:
      
     def loads(self, json_data : str):
         self.__data = json.loads(json_data)       
-    
+     
+     
             
     def initialize(self):
-        """
-        Initializes the configuration for the retirement calculation.
-
-        This method sets up the initial values for the calculation based on the 
-        selected calculation method. If the calculation method is "Single", it 
-        calculates the maximum number of years for the simulation, the inflation rate, and 
-        the performance rate. These values are then converted to monthly lists 
-        and stored in the configuration.
-
-        The method also initializes the year and month to 0.
-
-        Returns:
-            None
-        """
-        if self.__initialized: 
-            raise Exception("Object was already initialized.")
-        self.__initialized = True
-        
-        monthly_lists = self.__monthly_lists
-        for key in monthly_lists:
-            if key == Config.EARLY_SPENDING : 
-                self.convert_to_monthly_list(key,monthly_lists[key], self.getEarlyRetirementAge())
-            elif key == Config.LEGAL_SPENDING : 
-                self.convert_to_monthly_list(key,monthly_lists[key], self.getLegalRetirementAge())
-            else :
-                self.convert_to_monthly_list(key,monthly_lists[key])
-                                        
+                                
 
         if self.getValue(Config.CALCULATION_METHOD) == "Single":      
            self.setValue(Config.CALCULATION_INFLATION, self.getValue(Config.CALCULATION_SINGLE_INFLATION))
            self.setValue(Config.CALCULATION_PERFORMANCE, self.getValue(Config.CALCULATION_SINGLE_PERFORMANCE))
 
 
-        # set the maximum simulation period
-        period = self.getValue(Config.GENERAL_END) - self.getValue(Config.GENERAL_START)
-        self.setValue(Config.GENERAL_MAXPERIOD, Utils.years_to_months(period))
-        self.setSimulationTime(0)
+        # set default values
+        self.setValue(Config.GENERAL_STARTAGE, self.getValue(Config.GENERAL_STARTAGE, Config.DEFAULT_STARTAGE))
+        self.setValue(Config.LEGAL_AGE, self.getValue(Config.LEGAL_AGE, Config.DEFAULT_LEGALAGE))
+        end_age = self.getValue(Config.GENERAL_ENDAGE)
+        
+        if end_age is None :
+            end_age = self.getValue(Config.GENERAL_STARTAGE) + self.DEFAULT_MAXPERIOD
+        
+        self.setValue(Config.GENERAL_ENDAGE, end_age)
+        self.__start_age = self.getValue(Config.GENERAL_STARTAGE)
         return self
         
-    
-     
-    def setSimulationTime(self, month):
-        """
-        Sets the simulation time by updating the calculation year and month.
-
-        Args:
-            month (int): The number of month since start of the simulation. The value is starting with 0.
-
-        This method updates the configuration with the provided year and 
-        calculates the corresponding month value using the `years_to_months` 
-        utility function.
-        """
-        self.setValue(Config.CALCULATION_ACTUAL_MONTH, int(month))
-    
-        
-    def getSimulationTime(self):
-        """
-        Retrieves the simulation time.
-
-        Returns:
-            the actual month for the calculation. It starts with 0.
-        """
-        return int(self.getValue(Config.CALCULATION_ACTUAL_MONTH))  
 
     def getValue(self, path : str, defaultValue=None) :
         """
@@ -180,6 +124,24 @@ class Config:
         except KeyError:
         #    logging.debug(f"KeyError: {path} not found returning default value: {defaultValue}")
             return defaultValue
+        
+    
+    def getActualValue(self, month : int, path : str, defaultValue=None) -> float:
+        
+        value = self.getValue(path, defaultValue)
+        
+        if (value is None or not isinstance(value, dict)) :
+            return value
+        
+        previous = defaultValue
+        for key in sorted(value.keys()):   # find a better algorithm sort is n"log(n
+            month_key = Utils.years_to_months(float(key) - self. __start_age) 
+            if month >= month_key:  # the key is greater to the month so we can return the previous value
+                previous = value[key]
+            else :
+                return previous
+        return previous
+    
 
     def setValue(self, path : str, value):
         """
@@ -288,66 +250,8 @@ class Config:
         data.__data =   data_copy
         return data
   
+
     
-    
-    def convert_to_monthly_list(self, input_key : str, monthly_rate : bool, start_year : float = 0.0):
-        """
-        Converts a dictionary of values to a monthly list based on the given parameters.
-
-        This function takes a dictionary of values, a boolean indicating whether the values are monthly rates, 
-        and an optional start year. It converts the dictionary to a monthly list, adjusting the keys to represent 
-        the number of months since the start year or age, and applying the monthly rate conversion if necessary.
-
-        Parameters:
-        - input_key (str): The key for the input data in the configuration.
-        - monthly_rate (bool): A boolean indicating whether the input values are monthly rates.
-        - start_year (float, optional): The start year for the conversion. Defaults to 0.0.
-
-        Returns:
-        - dict: A dictionary representing the monthly list of values.
-        """
-        year = int(self.getValue(Config.GENERAL_START,2013))
-        age = float(self.getValue(Config.GENERAL_AGE, 50))
-        input = self.getValue(input_key,{year : 0})
-        if start_year == 0 :
-            start_year = year
-        output = {}
-
-        input = input if isinstance(input, dict) else {start_year : input}
-        for key in input: 
-            float_key = float(key) if isinstance(key,str) else key     # if key is a string convert it to float
-            float_key = self.offset(float_key)
-         #   offset = year if float_key > Utils.MAGIC_YEAR else age  # nobody has an age over 200 so the offset is the actual year
-            new_key = Utils.years_to_months(float_key) 
-            value = input[key]
-            value = (1+value)**(1.0/Utils.MONTH)-1.0 if (monthly_rate) else value        
-            output[max(0,new_key)] = value
-
-        return output
-      
-     
-    def offset(self, year: float) -> float:
-        """
-        Calculate the offset between a given year and either the start year or start age.
-
-        This function determines whether the input represents a calendar year or an age,
-        and calculates the difference between it and the corresponding start value.
-
-        Args:
-            year (float): The year or age to calculate the offset for.
-
-        Returns:
-            float: The calculated offset.
-                   If the input is greater than MAGIC_YEAR, it returns the difference
-                   between the input and the start year.
-                   Otherwise, it returns the difference between the input and the start age.
-        """
-        if (year > Utils.MAGIC_YEAR):
-            return year - self.getStartYear()
-        else:
-            return year - self.getStartAge()
-        
-
          
     def list_available_keys(self, data, prefix):
         keys = []
@@ -372,18 +276,15 @@ class Config:
             print(f"    {variable} = \"{key}\"")
         
         
-        
-    def getStartYear(self) :
-        return self.getValue(Config.GENERAL_START,self.__DEFAULT_START_YEAR)
     
-    def getStartAge(self) :
-        return self.getValue(Config.GENERAL_AGE,self.__DEFAULT_START_AGE)
+    def getStartAge(self) -> float:
+        return self.getValue(Config.GENERAL_STARTAGE, Config.DEFAULT_STARTAGE)
     
-    def getMaxPeriod(self) :
-        return self.getValue(Config.GENERAL_MAXPERIOD,self.__DEFAULT_MAXPERIOD)   
+    def getStartMonth(self) -> int :
+        return self.getValue(Config.GENERAL_STARTMONTH, Config.DEFAULT_STARTMONTH)
      
-    def getLegalRetirementAge(self) :
-        return self.getValue(Config.LEGAL_AGE, self.__DEFAULT_LEGAL_AGE)
+    def getLegalRetirementAge(self) -> float :
+        return self.getValue(Config.LEGAL_AGE, Config.DEFAULT_LEGALAGE)
     
-    def getEarlyRetirementAge(self) :
-        return self.getValue(Config.EARLY_AGE, self.__DEFAULT_LEGAL_AGE)
+    def getEarlyRetirementAge(self) -> float :
+        return self.getValue(Config.EARLY_AGE, Config.DEFAULT_LEGALAGE)

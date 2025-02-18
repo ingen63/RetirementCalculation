@@ -1,8 +1,6 @@
 {
     "General": {
-        "Start": 2020,
-        "End": 2090,
-        "Age": 57.75,
+        "StartAge": 57.75,
         "Wealth": 200000.00,  
         "IncomeTaxRate": 0.1,
         "CapitalTaxRate": 0.01
