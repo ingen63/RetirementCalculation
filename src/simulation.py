@@ -1,4 +1,6 @@
 
+import logging
+import time
 from src.data import Data
 from src.event import ChangeValueEvent, EarlyRetirmentEvent, EndSimulationEvent, EventHandler, LegalRetirmentEvent, StartSimulationEvent
 from src.util.config import Config
@@ -10,10 +12,10 @@ class Simulation :
     def init(self, config : Config) -> Data :
         
         EventHandler.reset_events()
-        data = Data()
+        data = Data(config.getStartAge(), config.getEndAge())
         start_age = float(config.getStartAge())
 
-        EventHandler.add_event(StartSimulationEvent(Config.DEFAULT_STARTMONTH))
+        EventHandler.add_event(StartSimulationEvent(config.getStartMonth()))
 
         # Early retirement
         early_retirment_month = Utils.years_to_months(config.getValue(Config.EARLY_AGE) - start_age)
@@ -42,10 +44,7 @@ class Simulation :
                 
                 EventHandler.add_event(ChangeValueEvent(month, key))
 
-
-        end_simulation_month = Utils.years_to_months(float(config.getValue(Config.GENERAL_ENDAGE)) - start_age)  + 1
-        EventHandler.add_event(EndSimulationEvent(end_simulation_month))
-        data.set_end_simulation_month(end_simulation_month)
+        EventHandler.add_event(EndSimulationEvent(config.getEndMonth()))
 
         return data
 
@@ -55,8 +54,8 @@ class Simulation :
         actual_month = data.get_actual_month()
         end_months = data.get_end_simulation_month()
 
-
-        for month in range(actual_month, end_months):
+        start_time = time.time()*1000.0
+        for month in range(actual_month, end_months+1):
             EventHandler.before(month, config, data)
             
             self.__one_month(month, data)
@@ -64,23 +63,8 @@ class Simulation :
             EventHandler.after(month, config, data)
             data.set_actual_month(month)
 
-
-
-
-    def __pre_retirement(self, month : int, data : Data) :
-        # monthly calculation for investment performance
-
-
-            wealth = (data.get_wealth() + data.get_savings()) * ((1.0 + data.get_performance())**(1.0/Utils.MONTH))
-            pk_capital = data.get_pk_capital() + data.get_pk_contribution()
-
-
-            if month % Utils.MONTH == 11 : # Interest is applied once a year at december
-                pk_capital  = pk_capital * (1.0 + data.get_pk_interest())
-                
-            # logging.debug(f"Month: {month}, Wealth: {wealth}, Private Pension Capital: {pk_capital}") 
-            data.set_wealth(wealth)
-            data.set_pk_capital(pk_capital)
+        end_time = time.time()*1000.0   
+        logging.info(f"Simulation finished after {end_time - start_time} ms")
 
     
     
@@ -110,7 +94,7 @@ class Simulation :
             yearly_income = 0.0 # reset income for the next year
                            
             #  adjust for inflation every year         
-            legal_pension *= ((1.0 + data.get_inflation())**(1.0/Utils.MONTH))
+            legal_pension *= (1.0 + data.get_inflation())
            
             
         data.set_wealth(wealth)

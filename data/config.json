@@ -1,6 +1,6 @@
 {
     "General": {
-        "StartAge": 57.75,
+        "StartAge": 62.00,
         "Wealth": 200000.00,  
         "IncomeTaxRate": 0.1,
         "CapitalTaxRate": 0.01
@@ -39,15 +39,16 @@
 
     "RealEstate": {
         "Rent": 1800.0,
+        "ThresholdYears" : 2,
         "Affordability": { 
             "Sustainability": 0.33, 
             "MortageInterest": 0.05,
             "CapitalContribution": 0.03,
-            "ExtraCosts": 7500.0 
+            "FixCosts": 0.01
         },
         "Properties": [
               {
-                "Id": "Haus",
+                "Name": "Haus",
                 "Worth":  1400000.0, 
                 "Buy": 40,
                 "Sell": 85.0,       
@@ -57,7 +58,7 @@
                 "MortageTerm": 10.0 
              },
              {
-                "Id": "Wohnung",
+                "Name": "Wohnung",
                 "Worth":  750000.0, 
                 "Buy": 60.0,
                 "Sell": 85.0,       

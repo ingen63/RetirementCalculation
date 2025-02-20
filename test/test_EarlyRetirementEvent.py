@@ -26,11 +26,13 @@ def config():
 
 @pytest.fixture
 def data():
-    return Data()
+    return Data(0,10)
 
 
 def test_early_retirement_event(config, data):
     event = EarlyRetirmentEvent(0)
+    data = Data(0, 30*12)
+    data.set_pk_capital(config.getActualValue(0, Config.PENSION_PRIVATE_CAPITAL))
     
     
     # Call the before_method

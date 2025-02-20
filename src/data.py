@@ -3,6 +3,7 @@
 import logging
 
 from src.util.config import Config
+from src.util.utils import Utils
 
 
 class Data:
@@ -47,9 +48,24 @@ class Data:
     __properties_expenses = 0.0
     __yearly_income = 0.0
     
-    __actual_month = Config.DEFAULT_STARTMONTH
+    __start_age = None
+    __end_age   = None
+    __actual_age = None
+    
+    __actual_month = None
+    __start_simulation_month = None
     __end_simulation_month = None
     
+    
+    def __init__(self, start_age : float, end_age : float, start_month  : int = 0 ) :
+        self.__start_simulation_month = start_month
+        self.__actual_month = start_month
+        self.__end_simulation_month = start_month + Utils.years_to_months(end_age - start_age)
+        self.__start_age = start_age
+        self.__end_age = end_age
+        self.__actual_age = start_age
+        
+        
     def set_value(self, key, value):
         attr = self.__mapping[key]
         if (hasattr(self, f"set_{attr}")) :
@@ -159,12 +175,22 @@ class Data:
     
     def set_actual_month(self, value : int):
         self.__actual_month = int(value)
+        self.__actual_age = Utils.month_to_years(value)
+        
+    def get_start_simulation_month(self) -> int:
+        return self.__start_simulation_month
         
     def get_end_simulation_month(self) -> int:
         return self.__end_simulation_month
+        
+    def get_start_age(self) -> int:
+        return self.__start_age
+ 
+    def get_end_age(self) -> int:
+        return self.__end_age
     
-    def set_end_simulation_month(self, value : int):
-        self.__end_simulation_month = int(value)
+    def get_actual_age(self) -> float:
+        return self.__actual_age
         
     def get_mapping_keys(self) -> set:
         return self.__mapping.keys()

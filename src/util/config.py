@@ -3,13 +3,14 @@ import copy
 
 from src.util.utils import Utils
 
+
 class Config:
-
-
 
     GENERAL = "General"
     GENERAL_STARTAGE = "General.StartAge"
-    GENERAL_START_MONTH = "General.StartMonth"
+    GENERAL_STARTMONTH = "General.StartMonth"
+    GENERAL_ENDMONTH = "General.EndMonth"
+    
     GENERAL_ENDAGE = "General.EndAge"
     GENERAL_WEALTH = "General.Wealth"
     GENERAL_INCOMETAXRATE = "General.IncomeTaxRate"
@@ -47,7 +48,7 @@ class Config:
     REALESTATE_AFFORDABILITY_SUSTAINABILITY = "RealEstate.Affordability.Sustainability"
     REALESTATE_AFFORDABILITY_MORTAGEINTEREST = "RealEstate.Affordability.MortageInterest"
     REALESTATE_AFFORDABILITY_CAPITALCONTRIBUTION = "RealEstate.Affordability.CapitalContribution"
-    REALESTATE_AFFORDABILITY_EXTRACOSTS = "RealEstate.Affordability.ExtraCosts"
+    REALESTATE_AFFORDABILITY_FIXCOSTS = "RealEstate.Affordability.FixCosts"
     REALESTATE_PROPERTIES = "RealEstate.Properties"
 
     CALCULATION = "Calculation"
@@ -69,6 +70,7 @@ class Config:
     DEFAULT_LEGALAGE = 65.0
     
     DEFAULT_STARTMONTH = 0
+    DEFAULT_ENDMONTH = 30*Utils.MONTH
         
     __data = {}
     
@@ -130,7 +132,7 @@ class Config:
         
         value = self.getValue(path, defaultValue)
         
-        if (value is None or not isinstance(value, dict)) :
+        if value is None or not isinstance(value, dict) :
             return value
         
         previous = defaultValue
@@ -280,8 +282,14 @@ class Config:
     def getStartAge(self) -> float:
         return self.getValue(Config.GENERAL_STARTAGE, Config.DEFAULT_STARTAGE)
     
-    def getStartMonth(self) -> int :
+    def getStartMonth(self) -> int :       
         return self.getValue(Config.GENERAL_STARTMONTH, Config.DEFAULT_STARTMONTH)
+    
+    def getEndAge(self) -> float :
+        return self.getValue(Config.GENERAL_ENDAGE, self.getStartAge()+Config.DEFAULT_MAXPERIOD)
+    
+    def getEndMonth(self) -> int :
+        return Utils.years_to_months(self.getEndAge() - self.getStartAge())
      
     def getLegalRetirementAge(self) -> float :
         return self.getValue(Config.LEGAL_AGE, Config.DEFAULT_LEGALAGE)

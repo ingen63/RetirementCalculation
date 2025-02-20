@@ -20,7 +20,7 @@ def config():
 
 @pytest.fixture
 def data():
-    return Data()
+    return Data(0,30*12)
 
 
 def test_change_value_event_before_method(config, data):
@@ -34,6 +34,18 @@ def test_change_value_event_before_method(config, data):
 
     # Assert
     assert data.get_performance() == test_value
+    
+def test_change_value_event_data_before_start(config, data):
+    # Arrange
+    test_value = {"40" : 0.04, "60" : 0.06}
+    config.setValue( Config.CALCULATION_PERFORMANCE, test_value)
+    event = ChangeValueEvent(0,  Config.CALCULATION_PERFORMANCE)
+
+    # Act
+    event.before_method(config, data)
+
+    # Assert
+    assert data.get_performance() == 0.04  
 
 def test_change_value_event_nonexistent_key(config, data):
     # Arrange

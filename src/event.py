@@ -11,15 +11,6 @@ from src.util.utils import Utils
 
 class Event(ABC):
     
-    START_CALCULATION = 0
-    END_CALCULATION = 1
-    
-    EARLY_RETIREMENT = 10
-    LEGAL_RETIREMENT = 20
-    PROPERTY_BUY = 30
-    PROPERTY_SELL = 31
-    MORTAGE_NEW = 35
-    
     
     __month = 0
     
@@ -47,8 +38,6 @@ class StartSimulationEvent(Event):
         return "StartSimulationEvent"
     
     def before_method(self, config: Config, data : Data) :
-        
-        data.set_actual_month(0)
         
         # calculate initial wealth
         data.set_wealth(config.getValue(Config.GENERAL_WEALTH,0.0))
@@ -110,6 +99,8 @@ class EarlyRetirmentEvent(Event) :
         data.set_extra(config.getValue(Config.EARLY_SEVERANCEPAY))
         data.set_spending(config.getActualValue(self.get_month(), Config.EARLY_SPENDING))
         data.set_savings(0.0)
+        sum = data.get_wealth() + data.get_extra() + data.get_lumpsum()
+        data.set_wealth(sum)
                        
       
     def after_method(self, config, data):
@@ -122,7 +113,7 @@ class EarlyRetirmentEvent(Event) :
     def  __private_pension(self, config : Config, data : Data) :
             
         # calculate private pension    
-        pk_capital = config.getValue(Config.PENSION_PRIVATE_CAPITAL)
+        pk_capital = data.get_pk_capital()
         lumpsum_ratio = config.getValue(Config.PENSION_PRIVATE_LUMPSUMRATIO)
         lumpsum_taxrate = config.getValue(Config.PENSION_PRIVATE_LUMPSUMTAXRATE)
         conversion_rate = config.getValue(Config.PENSION_PRIVATE_CONVERSIONRATE)
@@ -167,7 +158,7 @@ class EventHandler() :
     
     @staticmethod
     def reset_events():
-        __events = {}
+        EventHandler.__events = {}
        
     @staticmethod    
     def get_all_events() -> dict:

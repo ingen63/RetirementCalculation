@@ -39,7 +39,7 @@ def test_set_value(config):
     config.setValue(Config.GENERAL_STARTAGE, 50)
     config.initialize()
     
-    data = Data()
+    data = Data(config.getStartAge(), config.getEndAge())
     
     initial = data.get_spending()
     actual = config.getActualValue((65-50)*12, Config.EARLY_SPENDING)
