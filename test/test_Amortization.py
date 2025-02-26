@@ -1,18 +1,13 @@
-import json
+
 import pytest
-from src.data import Data
-from src.property import Mortage, Property, PropertyManager
-from src.util.config import Config
+from data import Data
+from property import Mortage, Property, PropertyManager
+from config import Config
 
 
 @pytest.fixture
 def config():
-    sample_data = {
-    }
     config = Config()    
-    config.loads(json.dumps(sample_data))
-    config.initialize()
-    config = Config().initialize()
     yield config
     
     
@@ -27,7 +22,7 @@ def test_Amortization(config):
     data.set_private_pension(10)
 
     start_age = config.getStartAge()
-    property = Property(config, {"Name": "Owned House", "Price": 1000.0, "Buy": start_age-10, "Sell": start_age+10,  "FixCosts": 0.0})
+    property = Property(Config({"Name": "Owned House", "Price": 1000.0, "Buy": start_age-10, "Sell": start_age+10, "FixCosts" : 0.0}))
     
     PropertyManager.add_property(property)
     
@@ -53,7 +48,7 @@ def test_Amortization(config):
         
     assert round(PropertyManager.max_mortage(property, data, config),2) == 1600
     
-    property.set_fix_costs(0.01*property.get_price())
+    property.set_fix_costs(None)
     
     assert round(PropertyManager.max_mortage(property, data, config),2) == 1400
     
@@ -61,7 +56,25 @@ def test_Amortization(config):
     mortage.set_value(4000)
     property.set_worth(4000)
     assert round(PropertyManager.max_mortage(property, data, config),2) == 3200
-
+    
+    data.set_wealth(0)
+    data.set_legal_pension(0/Config.MONTHS)
+    data.set_private_pension(100/Config.MONTHS)
+    property.set_price(1000)
+    property.set_worth(1000)
+    
+    max_mortaqe = PropertyManager.max_mortage(property, data, config)
+    max_mortage_costs = max_mortaqe*Mortage.DEFAULT_AFFORDABILITY_MORTAGEINTEREST+property.get_price()*Mortage.DEFAULT_AFFORDABILITY_FIXCOSTS
+    income = (data.get_private_pension()+data.get_legal_pension())*Config.MONTHS + data.get_wealth()*Mortage.DEFAULT_AFFORDABILITY_CAPITALCONTRIBUTION
+    assert round(max_mortage_costs,2) == round(income*Mortage.DEFAULT_AFFORDABILITY_SUSTAINABILITY,2)
+    
+    data.set_wealth(200)
+    property.set_mortage(None)
+    max_mortaqe = PropertyManager.max_mortage(property, data, config)
+    max_mortage_costs = max_mortaqe*Mortage.DEFAULT_AFFORDABILITY_MORTAGEINTEREST+property.get_price()*Mortage.DEFAULT_AFFORDABILITY_FIXCOSTS
+    income = (data.get_private_pension()+data.get_legal_pension())*Config.MONTHS + data.get_wealth()*Mortage.DEFAULT_AFFORDABILITY_CAPITALCONTRIBUTION
+    assert round(max_mortage_costs,2) == round(income*Mortage.DEFAULT_AFFORDABILITY_SUSTAINABILITY,2)
+    
     
         
     

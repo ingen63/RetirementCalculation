@@ -1,34 +1,28 @@
 import json
 import pytest
-from src.event import ChangeValueEvent
-from src.util.config import Config
-from src.data import Data
+from event import ChangeValueEvent
+from config import Config
+from data import Data
 
 @pytest.fixture
 def config():
-    sample_data = {
-        
-        "Calculation": {
-            "Performance": 100
-        }
-    }
+
     config = Config()
-    config.loads(json.dumps(sample_data))
-    config.setValue(Config.GENERAL_STARTAGE, 50)
-    config.initialize()
+
     return config
 
 @pytest.fixture
 def data():
-    return Data(0,30*12)
+    return Data(Config.DEFAULT_STARTAGE,Config.DEFAULT_STARTAGE+Config.DEFAULT_MAXPERIOD, Config.DEFAULT_STARTMONTH)
 
 
 def test_change_value_event_before_method(config, data):
     # Arrange
-    test_value = 150
-    config.setValue( Config.CALCULATION_PERFORMANCE, test_value)
-    event = ChangeValueEvent(0,  Config.CALCULATION_PERFORMANCE)
+    test_value = 0.01
+    config.setValue(Config.CALCULATION_SINGLE_PERFORMANCE, test_value)
+    event = ChangeValueEvent(Config.DEFAULT_STARTMONTH,  Config.CALCULATION_SINGLE_PERFORMANCE)
 
+    assert data.get_performance() == 0.0
     # Act
     event.before_method(config, data)
 
@@ -38,14 +32,16 @@ def test_change_value_event_before_method(config, data):
 def test_change_value_event_data_before_start(config, data):
     # Arrange
     test_value = {"40" : 0.04, "60" : 0.06}
-    config.setValue( Config.CALCULATION_PERFORMANCE, test_value)
-    event = ChangeValueEvent(0,  Config.CALCULATION_PERFORMANCE)
+    config.setValue( Config.CALCULATION_SINGLE_PERFORMANCE, test_value)
+    event40 = ChangeValueEvent(Config.DEFAULT_STARTMONTH,  Config.CALCULATION_SINGLE_PERFORMANCE)
+    event61 = ChangeValueEvent(config.age2months(61),  Config.CALCULATION_SINGLE_PERFORMANCE)
+     
 
     # Act
-    event.before_method(config, data)
-
-    # Assert
-    assert data.get_performance() == 0.04  
+    event40.before_method(config, data)
+    assert data.get_performance() == 0.04
+    event61.before_method(config, data) 
+    assert data.get_performance() == 0.06
 
 def test_change_value_event_nonexistent_key(config, data):
     # Arrange

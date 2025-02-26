@@ -2,26 +2,24 @@
 
 import logging
 
-from src.util.config import Config
-from src.util.utils import Utils
+from config import Config
 
 
 class Data:
     
     __mapping = {
-            Config.GENERAL_INCOMETAXRATE : "income_taxrate",
-            Config.GENERAL_CAPITALTAXRATE : "capital_taxrate",
+            Config.TAXES_INCOME : "income_taxrate",
+            Config.TAXES_CAPITAL : "capital_taxrate",
 
             Config.PENSION_PRIVATE_CONTRIBUTION : "pk_contribution",
             Config.PENSION_PRIVATE_INTEREST : "pk_interest",
             
-            Config.BEFORE_SAVINGS : "savings",
-
-            Config.EARLY_SPENDING : "spending",
-            Config.LEGAL_SPENDING : "spending",
-            
-            Config.CALCULATION_PERFORMANCE : "performance",
-            Config.CALCULATION_INFLATION : "inflation"
+            Config.MONEYFLOWS_SAVINGS : "savings",
+            Config.MONEYFLOWS_SPENDINGS : "spending",
+            Config.MONEYFLOWS_EXTRA : "extra",
+                        
+            Config.CALCULATION_SINGLE_PERFORMANCE : "performance",
+            Config.CALCULATION_SINGLE_INFLATION : "inflation"
         }
     
     
@@ -29,7 +27,8 @@ class Data:
     __spending = 0.0
     __private_pension = 0.0
     __legal_pension = 0.0
-    __properties_expenses = 0.0
+    
+    _threshold_months = 0.0
     
     __performance = 0.0
     __inflation = 0.0
@@ -57,10 +56,10 @@ class Data:
     __end_simulation_month = None
     
     
-    def __init__(self, start_age : float, end_age : float, start_month  : int = 0 ) :
+    def __init__(self, start_age : float, end_age : float, start_month  : int = Config.DEFAULT_STARTMONTH ) :
         self.__start_simulation_month = start_month
         self.__actual_month = start_month
-        self.__end_simulation_month = start_month + Utils.years_to_months(end_age - start_age)
+        self.__end_simulation_month = start_month + round((end_age - start_age)*Config.MONTHS)
         self.__start_age = start_age
         self.__end_age = end_age
         self.__actual_age = start_age
@@ -70,7 +69,10 @@ class Data:
         attr = self.__mapping[key]
         if (hasattr(self, f"set_{attr}")) :
             setter = getattr(self,  f"set_{attr}")
-            setter(value)
+            try:
+              setter(float(value))
+            except TypeError:
+               setter(value)     
         else:
             logging.error(f"Invalid key: {key} attr: {attr} for class Data")
     
@@ -78,24 +80,35 @@ class Data:
         return self.__wealth
     
     def set_wealth(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__wealth = value
     
     def get_spending(self) -> float:
         return self.__spending
     
     def set_spending(self, value :float) :
+        value = 0.0 if (value is None) else value
         self.__spending = value
+        
+    def get_threshold_months(self) -> int:
+        return self._threshold_months
+    
+    def set_threshold_months(self, month : int):
+        month = 0 if (month is None) else month
+        self._threshold_months = month
     
     def get_private_pension(self) -> float:
         return self.__private_pension
     
     def set_private_pension(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__private_pension = value
     
     def get_legal_pension(self) -> float:
         return self.__legal_pension
     
     def set_legal_pension(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__legal_pension = value
     
     def get_properties_expenses(self) -> float:
@@ -108,66 +121,77 @@ class Data:
         return self.__performance
     
     def set_performance(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__performance = value
     
     def get_inflation(self) -> float:
         return self.__inflation
     
     def set_inflation(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__inflation = value
     
     def get_income_taxrate(self) -> float:
         return self.__income_taxrate
     
     def set_income_taxrate(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__income_taxrate = value
     
     def get_capital_taxrate(self) -> float:
         return self.__capital_taxrate
     
     def set_capital_taxrate(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__capital_taxrate = value
     
     def get_pk_capital(self) -> float:
         return self.__pk_capital
     
     def set_pk_capital(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__pk_capital = value
     
     def get_pk_contribution(self) -> float:
         return self.__pk_contribution
     
     def set_pk_contribution(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__pk_contribution = value
     
     def get_pk_interest(self) -> float:
         return self.__pk_interest
     
     def set_pk_interest(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__pk_interest = value
     
     def get_savings(self) -> float:
         return self.__savings
     
     def set_savings(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__savings = value
     
     def get_lumpsum(self) -> float:
         return self.__lumpsum
     
     def set_lumpsum(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__lumpsum = value
     
     def get_extra(self) -> float:
         return self.__extra
     
     def set_extra(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__extra = value
        
     def get_yearly_income(self) -> float:
         return self.__yearly_income
     
     def set_yearly_income(self, value : float):
+        value = 0.0 if (value is None) else value
         self.__yearly_income = value
         
     def get_actual_month(self) -> int:
@@ -175,7 +199,9 @@ class Data:
     
     def set_actual_month(self, value : int):
         self.__actual_month = int(value)
-        self.__actual_age = Utils.month_to_years(value)
+                
+        months_since_start = value - self.get_start_simulation_month()
+        self.__actual_age =  self.get_start_age() + months_since_start/Config.MONTHS
         
     def get_start_simulation_month(self) -> int:
         return self.__start_simulation_month
@@ -194,3 +220,9 @@ class Data:
         
     def get_mapping_keys(self) -> set:
         return self.__mapping.keys()
+    
+    def time_to_sell(self) -> bool:
+        wealth = self.get_wealth() - self.get_threshold_months()*self.get_spending()
+        if (wealth < 0.0):
+            return True
+        return False

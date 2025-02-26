@@ -29,13 +29,6 @@ def test_positive_with_zero_values():
     assert Utils.not_null("Test with zero values", 0, 2, 3) is False
     
     
-def test_years_to_months():
-        assert Utils.years_to_months(1) == 12
-        assert Utils.years_to_months(2.5) == 30
-        assert Utils.years_to_months(0) == 0
-        assert Utils.years_to_months(-1) == -12
-        assert Utils.years_to_months(1.75) == 21
-        assert Utils.years_to_months(6.99999/12) == 7
 
 def test_month_to_years():
         assert Utils.month_to_years(12) == 1

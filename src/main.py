@@ -1,15 +1,42 @@
 
-from src.util.config import Config
-from src.calculations import Calculation
+import logging
+import argparse
+from config import Config
+from simulation import Simulation
 
-def main():
-    config = Config()
+
+def main(file : str, log_level : int, overrides : str) :
     
-    config.load("data/config.json")
-    data = config.clone().initialize()
+    logging.basicConfig(level=log_level, force=True)
     
-    calculation = Calculation()
+    if (file is None) :
+        file = "./data/config.json"
+    config = Config().load(file)
+    override(config, overrides)
     
-    calculation.calculate_pre_retirement(data)
+    simulation = Simulation()
+    data = simulation.init(config)
+    simulation.run(data, config)
+    
+def override(config : Config, overrides : str) :
+    if (overrides is None) :
+        return
+    keys = overrides.split(',')
+    for key in keys:
+        key, value = key.split(':')
+        
+        if config.exists(key) :
+            # try to convert it to int or float
+            old_value = config.setValue(key, value)
+            logging.info(f"Overriding value '{old_value}' for '{key}' with '{value}'")
+            
+if __name__=="__main__":
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--file", help = "Input file to be used for simulation. Default is ./data/config.json", default="./data/config.json")
+    parser.add_argument("--log", help = "set log level, default is INFO", default=logging.INFO)
+    parser.add_argument("-o", "--overrides", help = "To override keys from the given config file. Format is 'key1 : value1, key2 : value2,...'")
+    args = parser.parse_args()
+    main(args.file, args.log, args.overrides)
     
     

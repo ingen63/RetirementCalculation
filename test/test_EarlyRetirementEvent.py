@@ -1,27 +1,12 @@
 import json
 import pytest
-from src.util.config import Config
-from src.data import Data
-from src.event import EarlyRetirmentEvent
+from config import Config
+from data import Data
+from event import ChangeValueEvent, EarlyRetirmentEvent
 
 @pytest.fixture
 def config():
-    sample_data = {
-        "Early": {
-            "SeverancePay": 10000.0,
-            "Spending": 5000.0
-        },
-        "Pension": {
-            "Private": {
-                "Capital": 500000.0,
-                "LumpsumRatio": 0.25,
-                "LumpsumTaxrate": 0.1,
-                "ConversionRate": 0.05
-            }
-        }
-    }
     config = Config()
-    config.loads(json.dumps(sample_data))
     return config
 
 @pytest.fixture
@@ -30,23 +15,42 @@ def data():
 
 
 def test_early_retirement_event(config, data):
-    event = EarlyRetirmentEvent(0)
-    data = Data(0, 30*12)
-    data.set_pk_capital(config.getActualValue(0, Config.PENSION_PRIVATE_CAPITAL))
+
+    config.setValue(Config.PENSION_EARLYRETIREMENT, 60)
+    event = EarlyRetirmentEvent(config.age2months(config.getEarlyRetirementAge()))
+    change_event = ChangeValueEvent(event.get_month(),Config.MONEYFLOWS_EXTRA)
+    data = Data(config.getStartMonth(), config.getEndMonth())
+
+    config.setValue(Config.PENSION,{"Private": {
+                "Capital": 1000,
+                "LumpsumRatio": 0.5,
+                "ConversionRate": 0.1, 
+                "Contribution":  {"50": 5000.0},
+                "Interest": {"50": 0.05}
+                }
+            })
+    config.setValue(Config.MONEYFLOWS, {
+                "Savings":  {"50": 500.0, "60": 0},
+                "Spendings": {"50": 5000,"60" : 6000,  "65": 6500},
+                "Extra": {"60": 60000.0}
+            })
     
+    data.set_pk_capital(config.getValue(Config.PENSION_PRIVATE_CAPITAL))
     
     # Call the before_method
     event.before_method(config, data)
+    change_event.before_method(config, data)
     
     
     # Assert that extra and spending were set correctly
-    assert data.get_extra() == config.getValue(Config.EARLY_SEVERANCEPAY)
-    assert data.get_spending() == config.getValue(Config.EARLY_SPENDING)
-    assert data.get_lumpsum() == 0.25*500000*(1-0.1)
+    assert data.get_extra() == 60000.0
+    assert data.get_spending() == 6000
+    assert data.get_lumpsum() == 0.5*1000.0
     
     
     event.after_method(config, data)
+    change_event.after_method(config, data)
     assert data.get_extra() == 0.0
-    assert data.get_spending() == config.getValue(Config.EARLY_SPENDING)
+    assert data.get_spending() == 6000.0
     assert data.get_lumpsum() == 0.0
     

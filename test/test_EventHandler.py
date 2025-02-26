@@ -1,5 +1,5 @@
-import pytest
-from src.event import EventHandler, Event
+
+from event import EventHandler, Event
 
 
 

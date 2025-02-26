@@ -48,19 +48,6 @@ class Utils:
         return True
 
     
-        
-    @staticmethod
-    def years_to_months(years : float) -> int:
-        """
-        Converts the number of years to months and rounds down to the nearest integer.
-
-        Args:
-            years (int): The number of years.
-
-        Returns:
-            int: The number of months in the given number of years.
-        """
-        return round(years * Utils.MONTH)
     
     @staticmethod
     def month_to_years(month : int) -> float:

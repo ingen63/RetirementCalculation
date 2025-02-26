@@ -1,12 +1,9 @@
 
-
-
 import logging
 import uuid
 from typing import List
-from src.data import Data
-from src.util.config import Config
-from src.util.utils import Utils
+from data import Data
+from config import Config
 
 
 class Mortage :
@@ -16,17 +13,25 @@ class Mortage :
     DEFAULT_AFFORDABILITY_SUSTAINABILITY = 1.0/3.0
     DEFAULT_AFFORDABILITY_MORTAGEINTEREST = 0.05
     DEFAULT_AFFORDABILITY_CAPITALCONTRIBUTION = 0.03
-    DEFAULT_AFFORDABILITY_FIXCOSTS = 0.01
-    
+    DEFAULT_AFFORDABILITY_FIXCOSTS = 0.01  
     DEFAULT_MORTAGE_TERM = 10
-    
     
     
     __value = 0.0
     __interest = 0.0
-    __start = 0.0
+    __start_age = 0.0
     __term = 0.0
-    __regular_amortization = 0.0
+    __amortization = 0.0
+    
+    def __init__(self, property_config : Config = None) :
+        if property_config is None : 
+            property_config = Config()
+        
+        self.set_value(property_config.getValue(Property.MORTAGE_VALUE, 0.0))
+        self.set_interest(property_config.getValue(Property.MORTAGE_INTEREST, Mortage.DEFAULT_AFFORDABILITY_MORTAGEINTEREST))
+        self.set_start_age(property_config.getValue(Property.MORTAGE_STARTAGE, None))
+        self.set_term(property_config.getValue(Property.MORTAGE_TERM, Mortage.DEFAULT_MORTAGE_TERM))
+        self.set_amortization(property_config.getValue(Property.MORTAGE_AMORTIZATION,0.0))
         
     
     def get_value(self) -> float :
@@ -41,11 +46,11 @@ class Mortage :
     def set_interest(self, interest : float) :
         self.__interest = interest
         
-    def get_start(self) -> float :
-        return self.__start
+    def get_start_age(self) -> float :
+        return self.__start_age
     
-    def set_start(self, start : float) :
-        self.__start = start
+    def set_start_age(self, start_age : float) :
+        self.__start_age = start_age
         
     def get_term(self) -> float :
         return self.__term
@@ -53,81 +58,63 @@ class Mortage :
     def set_term(self, term : float) :
         self.__term = term
         
-    def get_end(self) -> float :
-        return self.get_start() + self.get_term()
+    def get_end_age(self) -> float :
+        return self.get_start_age() + self.get_term()
         
-    def get_regular_amortization(self) -> float :
-        return self.__regular_amortization
+    def get_amortization(self) -> float :
+        return self.__amortization
     
-    def set_regular_amortization(self, amortization : float) :
-        self.__regular_amortization = amortization
+    def set_amortization(self, amortization : float) :
+        self.__amortization = amortization
         
     def get_costs(self) -> float :
-        interest = (1.0 + self._get_interest())**(1.0/ Mortage.PERIOD) 
-        return (self.get_value()*interest + self.get_regular_amortization())/Mortage.PERIOD
-
-    def regular_amortization(self) -> float :
-        value = self.get_value()
-        value = value - self.get_regular_amortization()
-        self.set_value(max(value, 0.0)) 
+        interest = (1.0 + self.get_interest())**(1.0/ Mortage.PERIOD) - 1.0
+        return self.get_value()*interest + self.get_amortization()/Mortage.PERIOD
         
 
 class Property :
     
     NAME = "Name"
+    STATUS = "Status"
     WORTH = "Worth"
     PRICE  = "Price"
-    BUY = "Buy"
-    SELL = "Sell"
-    MORTAGE = "Mortage"
+    BUYAGE = "BuyAge"
+    SELLAGE = "SellAge"
     FIXCOSTS = "FixCosts"
-    PLANNED_REGULAR_AMORTIZATION = "Regular_Amortization"
-    MORTAGE_INTEREST = "MortageInterest"
-    MORTAGE_START = "MortageStart"
-    MORTAGE_TERM = "MortageTerm"
-   
+    RENTALINCOME = "RentalIncome"
+    MORTAGE = "Mortage"
+    MORTAGE_VALUE = "Mortage.Value"
+    MORTAGE_INTEREST = "Mortage.Interest"
+    MORTAGE_STARTAGE = "Mortage.StartAge"
+    MORTAGE_TERM = "Mortage.Term"
+    MORTAGE_AMORTIZATION = "Mortage.Amortization"
     
     OWNED = "Owned"
     PLANNED = "Planned"
     SOLD =  "Sold"
+    RENTED = "Rented"
     
     OWN_FUNDS = 0.2
     
     
-    __id = None
-    __name = None
-    __status = None
-    __price  = 0.0
-    __worth = 0.0
-    __buy_age = 0.0
-    __sell_age = 0.0
-    __mortage = None
-    __fix_costs = 0.0
-    __regular_amortization = 0.0
-    __planned_mortage_interest = 0.0
-    __planned_mortage_term = 0.0
-    
-    
-    def __init__(self, config : Config, property_config : dict) :
-        self.__id = uuid.uuid4()
-        self.__name = property_config.get(Property.NAME,f"Property {id}")
-        self.__price = property_config.get(Property.PRICE,1.0)
-        self.__worth = property_config.get(Property.WORTH,self.get_price())
-        self.__buy_age = property_config.get(Property.BUY,0.0)
-        self.__sell_age = property_config.get(Property.SELL,config.getEndAge()+1)
-        self.__planned_regular_amortization = property_config.get(Property.PLANNED_REGULAR_AMORTIZATION,0.0)
-        self.__fix_costs = property_config.get(Property.FIXCOSTS, Mortage.DEFAULT_AFFORDABILITY_FIXCOSTS * self.get_price())
-        self.__planned_mortage_interest = property_config.get(Property.MORTAGE_INTEREST, Mortage.DEFAULT_AFFORDABILITY_MORTAGEINTEREST)
-        self.__planned_mortage_term = property_config.get(Property.MORTAGE_TERM, Mortage.DEFAULT_MORTAGE_TERM)
+    def __init__(self, property_config : Config) :
         
-        if config.getStartAge() > self.get_buy_age() :
-            self.set_status(Property.OWNED)
+        self.__id = uuid.uuid4()
+        self.__name =  property_config.getValue(Property.NAME,f"Name-{self.get_id()}")
+        self.set_status(property_config.getValue(Property.STATUS, Property.PLANNED))
+        self.set_price(property_config.getValue(Property.PRICE,0.0001))
+        self.set_worth(property_config.getValue(Property.WORTH,self.get_price()))
+        if (self.get_price()) == 0.0001 : 
+            self.set_price(self.get_worth())
+        self.set_buy_age(property_config.getValue(Property.BUYAGE,None))
+        self.set_sell_age(property_config.getValue(Property.SELLAGE, None))
+        self.set_rental_income(property_config.getValue(Property.RENTALINCOME,0.0))
+        self.set_fix_costs(property_config.getValue(Property.FIXCOSTS, None))
+        if (self.get_status() == Property.OWNED or self.get_status() == Property.PLANNED) :
+            self.set_mortage(Mortage(property_config))
         else :
-            self.set_status(Property.PLANNED)
-            
-        if (config.getStartAge()) > self.get_sell_age() :
-            self.set_status(Property.SOLD)
-    
+            self.__mortage = None
+        
 
     
     def get_id(self) -> str :
@@ -144,6 +131,9 @@ class Property :
        
     def get_price(self) -> float :   
         return self.__price
+        
+    def set_price(self, price : float) :
+        self.__price = price
     
     def get_worth(self) -> float :
         return self.__worth
@@ -153,10 +143,16 @@ class Property :
     
     def get_buy_age(self) -> float :
         return self.__buy_age
+    
+    def set_buy_age(self, buy_age : float) :
+        self.__buy_age = buy_age
         
     def get_sell_age(self) -> float :
         return self.__sell_age
         
+    def set_sell_age(self, sell_age : float) :
+         self.__sell_age = sell_age
+    
     def get_mortage(self) -> Mortage :
         return self.__mortage
     
@@ -167,133 +163,180 @@ class Property :
         return self.__fix_costs
     
     def set_fix_costs(self, fix_costs : float) :
+        fix_costs = Mortage.DEFAULT_AFFORDABILITY_FIXCOSTS*self.get_price()/Config.MONTHS if fix_costs is None else fix_costs
         self.__fix_costs = fix_costs
         
-    def get_planned_mortage_interest(self) -> float :
-        return self.__planned_mortage_interest
-    
-    def  get_planned_mortage_term(self)  -> float :
-        return self.__planned_mortage_term
-    
-    def get_planned_regular_amortization(self) -> float :
-        return self.__planned_regular_amortization
+    def get_rental_income(self) -> float :
+        return self.__rental_income
         
+    def set_rental_income(self, rental_income : float) :
+        rental_income = 0.0 if (rental_income is None) else rental_income
+        self.__rental_income = rental_income
     
-    def calculate_property_costs(self) -> float :
-        costs = self.get_fix_costs() + self.get_mortage().get_costs()
-        return costs
-
+    def get_property_costs(self) -> float :
+        mortage_costs = 0.0 if self.get_mortage() is None else self.get_mortage().get_costs()
+        return self.get_fix_costs() + mortage_costs
     
     
     
 class PropertyManager :
     
-    __owned = []
-    __planned = []
-    __sold = []
+    __properties = []
+    __expenses = {}
     
     @staticmethod
     def reset() -> None :
-        PropertyManager.__owned = []
-        PropertyManager.__planned = []
-        PropertyManager.__sold = []
+        PropertyManager.__properties = []
+        PropertyManager.__expenses = {}
+        
     
     @staticmethod
     def add_property(property : Property) :
-        if property.get_status() == Property.OWNED :
-           PropertyManager.__owned.append(property)
-        if property.get_status() == Property.PLANNED :
-           PropertyManager.__planned.append(property)
-        if property.get_status() == Property.SOLD :
-           PropertyManager.__sold.append(property)
+        PropertyManager.__properties.append(property)
+        if property.get_status() == Property.OWNED or property.get_status() == Property.RENTED:
+            PropertyManager.add_expenses(property)
+       
            
     @staticmethod
     def remove_property(property : Property) :
-        if property.get_status() == Property.OWNED :
-           PropertyManager.__owned.remove(property)
-        if property.get_status() == Property.PLANNED :
-           PropertyManager.__planned.remove(property)
-        if property.get_status() == Property.SOLD :
-           PropertyManager.__sold.remove(property)
+        PropertyManager.__properties.remove(property)  
+        PropertyManager.remove_expenses(property)   
+        
+           
+
     @staticmethod
-    def get_property_for_sale() -> Property :
-        if len(PropertyManager.__owned) == 0 :
-            return None
-        return PropertyManager.sort(PropertyManager.__owned)[0] 
-    
-    @staticmethod
-    def get_property_to_buy() -> Property :
-        if len(PropertyManager.__planned) == 0 :
-            return None
-        return PropertyManager.sort(PropertyManager.__planned)[0] 
-            
+    def add_expenses(property : Property) :
+       PropertyManager.__expenses[property.get_id()] = property.get_property_costs() + property.get_rental_income()
        
     @staticmethod
-    def sort(input : list[Property]) -> list[Property] :
-        return sorted(input, key=lambda obj: (obj.get_buy_age(), 1.0/obj.get_worth() ))
+    def remove_expenses(property : Property) :
+       PropertyManager.__expenses[property.get_id()] = 0.0
+        
+    @staticmethod
+    def get_property_for_sale() -> Property :
+        return PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties,Property.OWNED),True)[0] 
     
     @staticmethod
-    def sell(property : Property) -> None :
-        if property.get_status() != Property.OWNED :
-            return None
-        
-        mortage_value = 0
-        if property.get_mortage() is not None :
-            mortage_value = property.get_mortage().get_value()
+    def get_property_to_buy() -> Property :  
+        return PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties,Property.PLANNED),False)[0] 
             
-        value = property.get_worth() - mortage_value
-        PropertyManager.__owned.remove(property)
+    def get_property(id : str) -> Property :
+        for property in PropertyManager.__properties :
+            if property.get_id() == id :
+                return property
+        return None        
+       
+    @staticmethod
+    def __filter(input : list[Property], status : str) -> list[Property] :
+        return list(filter(lambda obj: obj.get_status() == status, input))
+    
+    
+    @staticmethod
+    def __sort(input : list[Property], low2high : bool) -> list[Property] :
+        return sorted(input, key=lambda obj: (obj.get_buy_age(),  obj.get_worth() if low2high else 1/obj.get_worth() ))   # sort by time to sell (Buy_age and then for price. Less worth first)
+    
+    @staticmethod
+    def sell(property : Property, data: Data) -> bool:
+        if property.get_status() != Property.OWNED :
+            logging.warning(f"Cannot sell property {property.get_name()} as it is no longer available.")
+            if data.time_to_sell() is True :
+                property = PropertyManager.get_property_for_sale()
+                if (property is None) :
+                    logging.warning("No more properties available to sell.")
+                    return False
+                return PropertyManager.sell(property, data)  
+            return False
+        property.set_status(Property.SOLD)
+        PropertyManager.remove_expenses(property)
+        mortage = 0.0 if property.get_mortage() is None else property.get_mortage().get_value()
+        data.set_wealth(data.get_wealth() + property.get_worth() - mortage) 
+        logging.info(f"Property {property.get_name()} has been sold at age {data.get_actual_age():.2f} for a price of {property.get_worth():.0f} CHF and a profit of {property.get_worth() - property.get_price():.0f} CHF.") 
+        return True
         
-        property.set_status(Property.SOLD)  # mark as sold
-        PropertyManager.__sold.append(property)
         
-        return value
+     
     
     @staticmethod   
-    def buy(property : Property, data : Data, config : dict) -> bool :
+    def buy(property : Property, data : Data, config : Config) -> bool :
         if property.get_status() != Property.PLANNED :
+            logging.warning(f"Cannot buy property {property.get_name()} as it is no longer available.")
             return False
-        
+
         mortage =  PropertyManager.mortage(property, data, config)
               
         if (mortage is None) :
-            return False
+            # try another object if more are available. 
+            property = PropertyManager.get_property_to_buy()
+            if property is None :
+                logging.warning("No more properties available to buy. Now we rent")
+                return PropertyManager.rent(data, config)
+            return PropertyManager.buy(property, data)
+        else :
+             
+            property.set_mortage(mortage)
+            property.set_status(Property.OWNED)  # mark as owned
+            property.set_buy_age(config.month2age(data.get_actual_month()))
+            PropertyManager.add_expenses(property)
+            data.set_wealth(data.get_wealth() - (property.get_price() - property.get_mortage().get_value()))
         
-        property.set_mortage(mortage)
-        property.set_status(Property.OWNED)  # mark as owned
-        property.set_buy_age((data.get_actual_month()-data.get_start_simulation_month())/Utils.MONTH + data.get_start_age())
-        PropertyManager.__planned.remove(property)
-        property.set_status(Property.OWNED)  # mark as owned
-        PropertyManager.__owned.append(property)
+        logging.info(f"Property {property.get_name()} has been bought at age {data.get_actual_age():.2f} for a price of {property.get_price():.0f} CHF and a mortage of {property.get_mortage().get_value():.0f} CHF.") 
+  
         
         return True
 
+    @staticmethod
+    def renew_mortage(property : Property, data : Data, config : Config) -> bool :
+        if property.get_status() != Property.OWNED :
+            logging.warning(f"Cannot renew property {property.get_name()} as it is no longer owned by yourself.")
+            return False
+        
+        mortage =  PropertyManager.mortage(property, data, config)
+        
+        if (mortage is None) :
+            logging.warning(f"Mortgage cant be to renew for property {property.get_name()} due to lack of wealth and income.")
+            PropertyManager.sell(property,data)
+            return False
+        else :
+            amortization = property.get_mortage().get_value() - mortage.get_value()
+            property.set_mortage(mortage)
+            PropertyManager.add_expenses(property)
+            amortization = property.get_mortage().get_value() - mortage.get_value()
+            data.set_wealth(data.get_wealth() - amortization)
+            logging.info(f"Mortgage has been renewed for property {property.get_name()} at age {data.get_actual_age():.2f} for a new mortage of {property.get_mortage().get_value():.0f} CHF.")
+        return True
+        
         
     @staticmethod
     def mortage(property : Property,  data : Data, config : Config) -> Mortage :
         
-
         worth = property.get_worth()
         wealth = data.get_wealth()
         max_mortage = PropertyManager.max_mortage(property, data, config)
         
-        renew = False if property.get_mortage() is None else True
+        
+        if property.get_status() == Property.OWNED :
+            renew = True
+        else:
+            renew = False
+            
         own_funds = 0.0 if renew  else worth * Property.OWN_FUNDS
         
-        if (wealth < own_funds ) :  # not enough minimum own funds
+        if (wealth < own_funds ) :  # not enough wealth to provide enough own funds
             return None
         
         if (renew) :
             mortage = property.get_mortage()
-            amortization = mortage.get_value() - max_mortage
+            new_mortage = min(mortage.get_value(), max_mortage)
+            amortization = mortage.get_value() - new_mortage
             if (wealth - amortization) < 0.0 :
                 return None
-        
-        mortage = Mortage()
-        mortage.set_value(max_mortage)
-        mortage.set_start(data.get_actual_age())
-        mortage.set_interest(property.get_planned_mortage_interest())
-        mortage.set_term(property.get_planned_mortage_term())
+        else :
+            new_mortage = min(property.get_worth()*(1.0-Property.OWN_FUNDS), max_mortage)
+            mortage = Mortage()
+            
+
+        mortage.set_value(new_mortage)
+        mortage.set_start_age(data.get_actual_age())
         
         return mortage
 
@@ -303,11 +346,11 @@ class PropertyManager :
         sustanability = config.getValue(Config.REALESTATE_AFFORDABILITY_SUSTAINABILITY,Mortage.DEFAULT_AFFORDABILITY_SUSTAINABILITY)
         interest = config.getValue(Config.REALESTATE_AFFORDABILITY_MORTAGEINTEREST, Mortage.DEFAULT_AFFORDABILITY_MORTAGEINTEREST)
         capital_contribution = config.getValue(Config.REALESTATE_AFFORDABILITY_CAPITALCONTRIBUTION, Mortage.DEFAULT_AFFORDABILITY_CAPITALCONTRIBUTION)
-        fix_costs = property.get_fix_costs()
+        fix_costs = property.get_fix_costs()*Config.MONTHS
         mortage = property.get_mortage().get_value() if property.get_mortage() is not None else 0.0
         
         wealth  = data.get_wealth()
-        income = (data.get_legal_pension() + data.get_private_pension())*Utils.MONTH
+        income = (data.get_legal_pension() + data.get_private_pension())*Config.MONTHS
         
         new_wealth = wealth
         new_max_mortage = 0.0
@@ -330,14 +373,26 @@ class PropertyManager :
             
         return -1
 
-    def get_owned_properties() -> List[Property] :
-        return PropertyManager.sort(PropertyManager.__owned)
+    @staticmethod
+    def get_owned_properties(low2high : bool = None) -> List[Property] :
+        low2high = False if low2high is None else low2high
+        return PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties, Property.OWNED),low2high)
     
-    def get_planned_properties() -> List[Property] :
-        return PropertyManager.sort(PropertyManager.__planned)
+    @staticmethod
+    def get_planned_properties(low2high : bool = None) -> List[Property] :
+        low2high = True if low2high is None else low2high
+        return PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties, Property.PLANNED), low2high)
     
-    def get_sold_properties() -> List[Property] :
-        return PropertyManager.sort(PropertyManager.__sold)
+    @staticmethod
+    def get_sold_properties(low2high : bool = None) -> List[Property] :
+        low2high = True if low2high is None else low2high
+        return PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties, Property.SOLD), low2high)
+    
+    
+    @staticmethod
+    def get_rented_properties(low2high : bool = None) -> List[Property] :
+        low2high = True if low2high is None else low2high
+        return PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties, Property.RENTED), low2high)
 
 
     

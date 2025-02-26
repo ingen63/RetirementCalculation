@@ -1,49 +1,43 @@
 import json
 import copy
 
-from src.util.utils import Utils
-
 
 class Config:
+    
+    MONTHS = 12
 
     GENERAL = "General"
     GENERAL_STARTAGE = "General.StartAge"
     GENERAL_STARTMONTH = "General.StartMonth"
-    GENERAL_ENDMONTH = "General.EndMonth"
-    
     GENERAL_ENDAGE = "General.EndAge"
     GENERAL_WEALTH = "General.Wealth"
-    GENERAL_INCOMETAXRATE = "General.IncomeTaxRate"
-    GENERAL_CAPITALTAXRATE = "General.CapitalTaxRate"
+    
+    TAXES_TAXRATE = "Taxes.TaxRate"
+    TAXES_INCOME = "Taxes.Income"
+    TAXES_CAPITAL = "Taxes.Capital"
+    TAXES_PENSIONCAPITAL = "Taxes.PensionCapital"
+    
 
     PENSION = "Pension"
+    PENSION_EARLYRETIREMENT = "Pension.EarlyRetirement"
+    PENSION_LEGALRETIREMENT = "Pension.LegalRetirement"
     PENSION_PRIVATE = "Pension.Private"
     PENSION_PRIVATE_CAPITAL = "Pension.Private.Capital"
     PENSION_PRIVATE_LUMPSUMRATIO = "Pension.Private.LumpsumRatio"
-    PENSION_PRIVATE_LUMPSUM = "Pension.Private.Lumpsum"
-    PENSION_PRIVATE_LUMPSUMTAXRATE = "Pension.Private.LumpsumTaxrate"
     PENSION_PRIVATE_CONVERSIONRATE = "Pension.Private.ConversionRate"
     PENSION_PRIVATE_CONTRIBUTION = "Pension.Private.Contribution"
     PENSION_PRIVATE_INTEREST = "Pension.Private.Interest"
     PENSION_PRIVATE_PENSION = "Pension.Private.Pension"
     PENSION_LEGAL = "Pension.Legal"
-    PENSION_LEGALADJUSTED = "Pension.LegalAdjusted"
 
-    BEFORE = "Before"
-    BEFORE_SAVINGS = "Before.Savings"
-
-    EARLY = "Early"
-    EARLY_AGE = "Early.Age"
-    EARLY_SEVERANCEPAY = "Early.SeverancePay"
-    EARLY_SPENDING = "Early.Spending"
-
-
-    LEGAL = "Legal"
-    LEGAL_AGE = "Legal.Age"
-    LEGAL_SPENDING = "Legal.Spending"
+    MONEYFLOWS = "MoneyFlows"
+    MONEYFLOWS_SAVINGS = "MoneyFlows.Savings"
+    MONEYFLOWS_SPENDINGS = "MoneyFlows.Spendings"
+    MONEYFLOWS_EXTRA = "MoneyFlows.Extra"
     
     REALESTATE = "RealEstate"
-    REALESTATE_RENT = "RealEstate.Rent"
+    REALESTATE_THRESHOLDYEARS = "RealEstate.ThresholdYears"
+    REALESTATE_BUYAFTERSELL = "RealEstate.BuyAfterSell"
     REALESTATE_AFFORDABILITY = "RealEstate.Affordability"
     REALESTATE_AFFORDABILITY_SUSTAINABILITY = "RealEstate.Affordability.Sustainability"
     REALESTATE_AFFORDABILITY_MORTAGEINTEREST = "RealEstate.Affordability.MortageInterest"
@@ -53,56 +47,39 @@ class Config:
 
     CALCULATION = "Calculation"
     CALCULATION_METHOD = "Calculation.Method"
-    CALCULATION_INFLATION = "Calculation.Inflation"
-    CALCULATION_PERFORMANCE = "Calculation.Performance"
-    CALCULATION_SPENDING = "Calculation.Spending"
-    CALCULATION_ACTUAL_MONTH = "Calculation.Actual.Month"
     CALCULATION_SINGLE = "Calculation.Single"
     CALCULATION_SINGLE_INFLATION = "Calculation.Single.Inflation"
     CALCULATION_SINGLE_PERFORMANCE = "Calculation.Single.Performance"
     CALCULATION_HISTORICAL = "Calculation.Historical"
-    CALCULATION_HISTORICAL_MAX = "Calculation.Historical.Max"
     CALCULATION_HISTORICAL_PORTFOLIOBALANCE = "Calculation.Historical.portfolioBalance"
     CALCULATION_HISTORICAL_HISTORICALDATA = "Calculation.Historical.historicalData"
+    CALCULATION_SCENARIOS = "Calculation.Scenarios"
 
     DEFAULT_STARTAGE = 50.0
     DEFAULT_MAXPERIOD = 30.0
     DEFAULT_LEGALAGE = 65.0
     
-    DEFAULT_STARTMONTH = 0
-    DEFAULT_ENDMONTH = 30*Utils.MONTH
+    DEFAULT_REALESTATE_THRESHOLDYEARS = 2
+    DEFAULT_REALESTATE_BUYAFTERSELL = True
+    
+    DEFAULT_STARTMONTH = 1
+    DEFAULT_ENDMONTH = DEFAULT_MAXPERIOD*MONTHS + DEFAULT_STARTMONTH
         
-    __data = {}
+  
+    def __init__(self, data = None ):
+        if (data is None) : 
+            data = {}
+        self.__data = data
     
             
     def load(self, file_path : str):
         with open(file_path, 'r') as file:
             self.__data = json.load(file)
+        return self
      
     def loads(self, json_data : str):
-        self.__data = json.loads(json_data)       
-     
-     
-            
-    def initialize(self):
-                                
-
-        if self.getValue(Config.CALCULATION_METHOD) == "Single":      
-           self.setValue(Config.CALCULATION_INFLATION, self.getValue(Config.CALCULATION_SINGLE_INFLATION))
-           self.setValue(Config.CALCULATION_PERFORMANCE, self.getValue(Config.CALCULATION_SINGLE_PERFORMANCE))
-
-
-        # set default values
-        self.setValue(Config.GENERAL_STARTAGE, self.getValue(Config.GENERAL_STARTAGE, Config.DEFAULT_STARTAGE))
-        self.setValue(Config.LEGAL_AGE, self.getValue(Config.LEGAL_AGE, Config.DEFAULT_LEGALAGE))
-        end_age = self.getValue(Config.GENERAL_ENDAGE)
-        
-        if end_age is None :
-            end_age = self.getValue(Config.GENERAL_STARTAGE) + self.DEFAULT_MAXPERIOD
-        
-        self.setValue(Config.GENERAL_ENDAGE, end_age)
-        self.__start_age = self.getValue(Config.GENERAL_STARTAGE)
-        return self
+        self.__data = json.loads(json_data)
+        return self     
         
 
     def getValue(self, path : str, defaultValue=None) :
@@ -122,10 +99,10 @@ class Config:
         try:
             for key in keys:
                 current = current[key]
-            return current
+            return self.best_guess_for_number(current)
         except KeyError:
         #    logging.debug(f"KeyError: {path} not found returning default value: {defaultValue}")
-            return defaultValue
+            return self.best_guess_for_number(defaultValue)
         
     
     def getActualValue(self, month : int, path : str, defaultValue=None) -> float:
@@ -137,12 +114,12 @@ class Config:
         
         previous = defaultValue
         for key in sorted(value.keys()):   # find a better algorithm sort is n"log(n
-            month_key = Utils.years_to_months(float(key) - self. __start_age) 
+            month_key = self.age2months(float(key)) 
             if month >= month_key:  # the key is greater to the month so we can return the previous value
                 previous = value[key]
             else :
-                return previous
-        return previous
+                return self.best_guess_for_number(previous)
+        return self.best_guess_for_number(previous)
     
 
     def setValue(self, path : str, value):
@@ -175,7 +152,7 @@ class Config:
                 old_value = None
                 if (keys[i] in current): # key exists in current
                     old_value = current[keys[i]]
-                current[keys[i]] = value
+                current[keys[i]] = self.best_guess_for_number(value)
              #   logging.debug(f"i: {i} key: {keys[i]} keys: {keys} current: {current} __data: {self.__data}")
                 return old_value
             
@@ -252,8 +229,33 @@ class Config:
         data.__data =   data_copy
         return data
   
+    def best_guess_for_number(self, value):
+    
+        try:
+            keys = value.split(".")
+            number = keys[0]
+            decimal = None
+            if (len(keys) > 1):
+                decimal = keys[1]
+            try:
+                if decimal is None or decimal == "0":
+                   return int(number)
+                else:
+                    return float(value)
+            except ValueError:
+                return value
+        except (ValueError, AttributeError):
+            return value
 
     
+    
+    def age2months(self, age) -> int:
+        years_since_start = self.best_guess_for_number(age) - self.getStartAge()
+        return self.getStartMonth() + round(years_since_start*Config.MONTHS)
+    
+    def month2age(self, month) -> float:
+        months_since_start = month - self.getStartMonth()
+        return self.getStartAge() + months_since_start/Config.MONTHS
          
     def list_available_keys(self, data, prefix):
         keys = []
@@ -277,6 +279,22 @@ class Config:
             variable = key.upper().replace('.', '_')
             print(f"    {variable} = \"{key}\"")
         
+     
+    def to_json(self):
+        data = {}
+        for key  in Config.__dict__:
+            if key.isupper() and not(key.startswith('__') and not key.endswith('__')):
+                keys = key.split('_')
+                current = data
+                for k in keys[:-1]:
+                    if k not in current:
+                        current[k] = {}
+                    current = current[k]
+                key = self.__getattribute__(key)
+                if (isinstance(key, str)):
+                   current[keys[-1]] = self.getValue(key, {})
+                
+        return json.dumps(data, indent=4)
         
     
     def getStartAge(self) -> float:
@@ -289,10 +307,10 @@ class Config:
         return self.getValue(Config.GENERAL_ENDAGE, self.getStartAge()+Config.DEFAULT_MAXPERIOD)
     
     def getEndMonth(self) -> int :
-        return Utils.years_to_months(self.getEndAge() - self.getStartAge())
+        return self.age2months(self.getEndAge())
      
     def getLegalRetirementAge(self) -> float :
-        return self.getValue(Config.LEGAL_AGE, Config.DEFAULT_LEGALAGE)
+        return self.getValue(Config.PENSION_LEGALRETIREMENT, Config.DEFAULT_LEGALAGE)
     
     def getEarlyRetirementAge(self) -> float :
-        return self.getValue(Config.EARLY_AGE, Config.DEFAULT_LEGALAGE)
+        return self.getValue(Config.PENSION_EARLYRETIREMENT, Config.DEFAULT_LEGALAGE)
