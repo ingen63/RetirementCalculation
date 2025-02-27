@@ -64,6 +64,8 @@ class Config:
     
     DEFAULT_STARTMONTH = 1
     DEFAULT_ENDMONTH = DEFAULT_MAXPERIOD*MONTHS + DEFAULT_STARTMONTH
+    
+    MAX_AGE = 120
         
   
     def __init__(self, data = None ):

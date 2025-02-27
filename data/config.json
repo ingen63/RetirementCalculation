@@ -2,7 +2,8 @@
     "General": {
         "StartAge": 63.167,
         "StartMonth" : 5,
-        "Wealth": 271665.00
+        "Wealth": 271665.00,
+        "EndAge": 120.0
     },
     "Taxes" : {
         "TaxRate": 105,
@@ -16,7 +17,7 @@
         "LegalRetirement" : 65,
         "Private": {
             "Capital": 1600517.0,
-            "LumpsumRatio": 1.0,
+            "LumpsumRatio": 0.5,
             "ConversionRate": 0.042, 
             "Contribution":  {"50": 4500.0},
             "Interest": {"50": 0.06}
@@ -26,7 +27,7 @@
 
     "MoneyFlows": {
         "Savings":  {"50": 1000.0, "63.17": 0},
-        "Spendings": {"63.167": 11208.00, "65.00": 8844.00},
+        "Spendings": {"63.167":9635.00, "65.00": 7270.0},
         "Extra": {"63.167": 88603.0}
     },
 
@@ -46,6 +47,7 @@
                 "Status": "Owned",
                 "Price": 725000.0,
                 "Worth":  1400000.0, 
+                "SellAge": 92.0,
                 "RentalIncome": 0.0,
                 "FixCosts": 600.0,
                 "Mortage": {       
@@ -60,7 +62,7 @@
                 "Name": "Wohnung",
                 "Status": "Planned",
                 "Price":  750000.0,
-                "BuyAge": 64.0, 
+                "BuyAge": 102.0, 
                 "Mortage": {       
                     "Interest": 0.0105,
                     "Term": 10.0,
@@ -69,8 +71,8 @@
              },
              {
                 "Name": "Mietwohnung",
-                "Status": "Rented",
-                "Price": 1800.0    
+                "Status": "PlannedForRent",
+                "RentalIncome": -1800.0    
              }    
         ]
     },

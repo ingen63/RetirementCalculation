@@ -46,12 +46,12 @@ class Simulation :
         for property in properties:
             PropertyManager.add_property(Property(Config(property)))
             
-        for property in PropertyManager.get_owned_properties() :
+        for property in PropertyManager.get_properties(Property.OWNED) :
             if (property.get_sell_age() is not None) :
                 EventHandler.add_event(SellPropertyEvent(config.age2months(property.get_sell_age()), property))
             renew_mortage_age = property.get_mortage().get_start_age() + property.get_mortage().get_term()
             EventHandler.add_event(RenewMortageEvent(config.age2months(renew_mortage_age), property))
-        for property in PropertyManager.get_planned_properties() :
+        for property in PropertyManager.get_properties(Property.PLANNED) :
             if (property.get_buy_age() is not None) :
                 EventHandler.add_event(BuyPropertyEvent(config.age2months(property.get_buy_age()), property))
 
@@ -70,14 +70,19 @@ class Simulation :
             data.set_actual_month(month)
             EventHandler.before(month, config, data)
             
-            self.__one_month(month, data)
+            wealth_trend = self.__one_month(month, data)
             
             EventHandler.after(month, config, data)
-  
-            if (data.get_wealth() < 0.0) :
-                logging.info(f"Simulation stopped due to negative wealth at age {round(data.get_actual_age(),2)}")
+            new_wealth = data.get_wealth()
+            projected_wealth = new_wealth + wealth_trend*data.get_threshold_months()
+            if (projected_wealth <= 0.0) :
+                if PropertyManager.nothing_to_sell() is False:
+                    logging.info(f"Need to sell properties with age {data.get_actual_age()}")
+                    EventHandler.add_event(SellPropertyEvent(month+1, PropertyManager.get_property_for_sale()))
+            if (new_wealth <= 0.0) :
+                logging.info(f"Simulation finished with age {data.get_actual_age()} with no money left.")
                 break
-
+            
         end_time = time.time()*1000.0   
         logging.info(f"Simulation finished after {end_time - start_time} ms")
 
@@ -94,14 +99,16 @@ class Simulation :
             legal_pension *= (1.0 + data.get_inflation())
         
         private_pension = data.get_private_pension()
+        monthly_performance = ((1.0 + data.get_performance())**(1.0/Config.MONTHS)) - 1
             
         yearly_income = data.get_yearly_income() + private_pension   + legal_pension 
-        total_deductions =  spending + data.get_properties_expenses()
+        total_deductions =  spending + PropertyManager.get_properties_expenses()
           
         total_income = private_pension + legal_pension
+        wealth_trend = total_income - total_deductions + data.get_wealth()*monthly_performance
             
         wealth = data.get_wealth() + data.get_savings() + data.get_extra() + total_income - total_deductions
-        wealth *=  ((1.0 + data.get_performance())**(1.0/Config.MONTHS))
+        wealth *=  1.0 +monthly_performance
         pk_capital = data.get_pk_capital() + data.get_pk_contribution()
   
         if month % Config.MONTHS == 0 : # Income Tax and Capital Tax are applied once a year at december
@@ -121,4 +128,6 @@ class Simulation :
         data.set_spending(spending)
         data.set_legal_pension(legal_pension)
         data.set_yearly_income(yearly_income)
+        
+        return wealth_trend
    

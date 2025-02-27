@@ -178,7 +178,19 @@ class SellPropertyEvent(Event) :
         logging.debug(f"Property {self.__name} is no longer available.")
         return False
 
-            
+    def after_method(self, config: Config, data : Data) -> bool:
+
+        buy_now = config.getValue(Config.REALESTATE_BUYAFTERSELL) == "True" 
+        if PropertyManager.nothing_to_sell() :
+            if buy_now is True :
+                if PropertyManager.nothing_to_buy() is False:
+                    EventHandler.add_event(BuyPropertyEvent(self.get_month()+1, PropertyManager.get_property_to_buy()))
+                else :   
+                    return PropertyManager.rent(config, data) 
+            else :
+                return PropertyManager.rent(config, data) 
+        return True
+                
         
 class BuyPropertyEvent(Event) : 
     
@@ -201,6 +213,13 @@ class BuyPropertyEvent(Event) :
             if (return_value is True) :
                 mortgage_renewal_month =  config.age2months(data.get_actual_age()+property.get_mortage().get_term()) 
                 EventHandler.add_event(RenewMortageEvent(mortgage_renewal_month, property))
+                PropertyManager.unrent(data, config)
+                return return_value
+            
+            else :
+                if PropertyManager.nothing_to_sell() :  
+                    PropertyManager.rent(config, data)
+                
         logging.debug(f"Property {self.__name} is no longer available.")
         return False
       
@@ -209,7 +228,7 @@ class RenewMortageEvent(Event):
     _name = None
     
     def get_name(self) -> str :
-        return "SellPropertyEvent"
+        return "RenewPropertyEvent"
     
     
     def __init__(self, month : int, property: Property ):
@@ -222,11 +241,12 @@ class RenewMortageEvent(Event):
         return_value = False
         property = PropertyManager.get_property(self.__id)
         if (property is not None):
-             return_value =  PropertyManager.renew_mortage(property, data, config)
-             if (return_value is True) :
-                mortage_renewal_month =  config.age2months(data.get_actual_age()+property.get_mortage().get_term()) 
-                EventHandler.add_event(RenewMortageEvent(mortage_renewal_month, property))
-        logging.debug(f"Property {self.__name} is no longer available.")
+            return_value =  PropertyManager.renew_mortage(property, data, config)
+            if (return_value is True) :
+                next_mortage_renewal_month =  config.age2months(data.get_actual_age()+property.get_mortage().get_term()) 
+                EventHandler.add_event(RenewMortageEvent(next_mortage_renewal_month, property))
+            else :  # renewal of mortage has failed, we have to sell the property
+                return_value = PropertyManager.sell(property, data)
         return return_value
     
 

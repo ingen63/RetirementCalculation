@@ -44,7 +44,6 @@ class Data:
     __lumpsum = 0.0
     __extra = 0.0
     
-    __properties_expenses = 0.0
     __yearly_income = 0.0
     
     __start_age = None
@@ -110,12 +109,6 @@ class Data:
     def set_legal_pension(self, value : float):
         value = 0.0 if (value is None) else value
         self.__legal_pension = value
-    
-    def get_properties_expenses(self) -> float:
-        return self.__properties_expenses
-    
-    def set_properties_expenses(self, value : float):
-        self.__properties_expenses = value
     
     def get_performance(self) -> float:
         return self.__performance
