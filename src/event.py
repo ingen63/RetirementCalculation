@@ -114,7 +114,8 @@ class EarlyRetirmentEvent(Event) :
         sum = data.get_wealth() + data.get_lumpsum()
         data.set_wealth(sum)
         
-        logging.info(f"Early Retirement: Wealth: {data.get_wealth():.2f} Severance Pay: {data.get_extra():.2f} Lumpsum:  {data.get_lumpsum():.2f}  Private Pension: {data.get_private_pension():.2f} ")
+        logging.info (f"Early Retirement: Wealth: {data.get_wealth():.2f} Severance Pay: {data.get_extra():.2f} Lumpsum:  {data.get_lumpsum():.2f}  Private Pension: {data.get_private_pension():.2f} ")
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Early Retirment with age of {data.get_actual_age():.2f} and wealth of {data.get_wealth():.0f} CHF with income of {data.get_actual_income():.0f} ")
         return True
                        
       
@@ -157,6 +158,7 @@ class LegalRetirmentEvent(Event) :
         data.set_legal_pension(config.getActualValue(self.get_month(), Config.PENSION_LEGAL))
       
         logging.info(f"Legal Retirement: Wealth: {data.get_wealth():.2f} Legal Pension: {data.get_legal_pension():.2f}")
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Legal Retirment with age of {data.get_actual_age():.2f} and wealth of {data.get_wealth():.0f} CHF with income of {data.get_actual_income():.0f} ")
         
 class SellPropertyEvent(Event) : 
     
@@ -186,9 +188,9 @@ class SellPropertyEvent(Event) :
                 if PropertyManager.nothing_to_buy() is False:
                     EventHandler.add_event(BuyPropertyEvent(self.get_month()+1, PropertyManager.get_property_to_buy()))
                 else :   
-                    return PropertyManager.rent(config, data) 
+                    return PropertyManager.rent(None, data) 
             else :
-                return PropertyManager.rent(config, data) 
+                return PropertyManager.rent(None, data) 
         return True
                 
         
@@ -249,8 +251,27 @@ class RenewMortageEvent(Event):
                 return_value = PropertyManager.sell(property, data)
         return return_value
     
+class RentPropertyEvent(Event) : 
+    
+    _id   = None
+    _name = None
+    
+    def get_name(self) -> str :
+        return "SellRentPropertyEvent"
+    
+    def __init__(self, month : int, property: Property ):
+        super().__init__(month)
+        self.__id = property.get_id()
+        self.__name = property.get_name()
+    
+    def before_method(self, config: Config, data : Data) -> bool: 
+        property = PropertyManager.get_property(self.__id)
+        if (property is not None):
+             return PropertyManager.rent(property, data)
+        logging.debug(f"Property {self.__name} is no longer available.")
+        return False
 
-        
+
 class EventHandler() :
     
     __events = {}

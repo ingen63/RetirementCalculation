@@ -7,7 +7,7 @@ from simulation import Simulation
 
 def main(file : str, log_level : int, overrides : str) :
     
-    logging.basicConfig(level=log_level, force=True)
+    intialize_logging(log_level)
     
     if (file is None) :
         file = "./data/config.json"
@@ -29,6 +29,28 @@ def override(config : Config, overrides : str) :
             # try to convert it to int or float
             old_value = config.setValue(key, value)
             logging.info(f"Overriding value '{old_value}' for '{key}' with '{value}'")
+            
+            
+def intialize_logging(log_level : int,):
+    logging.basicConfig(level=log_level, force=True)
+    
+    logger = logging.getLogger(Config.LOGGER_SUMMARY)
+    logger.setLevel(logging.INFO)
+ 
+   # Create a file handler to log messages to a file
+    handler = logging.FileHandler('summary.log', "w")
+    handler.setLevel(logging.INFO)
+
+    # Define the log message format
+    formatter = logging.Formatter('%(message)s')
+    handler.setFormatter(formatter)
+
+    # Attach the handler to the logger
+    logger.addHandler(handler)
+
+
+    
+    
             
 if __name__=="__main__":
     

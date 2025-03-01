@@ -62,10 +62,14 @@ class Config:
     DEFAULT_REALESTATE_THRESHOLDYEARS = 2
     DEFAULT_REALESTATE_BUYAFTERSELL = True
     
+    DEFAULT_TAXES_PENSIONCAPITAL = [-9.6001E-15, 8.034e-8,4.0908e-2]
+    
     DEFAULT_STARTMONTH = 1
     DEFAULT_ENDMONTH = DEFAULT_MAXPERIOD*MONTHS + DEFAULT_STARTMONTH
     
     MAX_AGE = 120
+    
+    LOGGER_SUMMARY= "logger.summary"
         
   
     def __init__(self, data = None ):
@@ -123,6 +127,33 @@ class Config:
                 return self.best_guess_for_number(previous)
         return self.best_guess_for_number(previous)
     
+    def interpolate(self, x : float, path : str, defaultValue=None) -> float:
+        
+                
+        value = self.getValue(path, defaultValue)
+        
+        if value is None or not isinstance(value, dict) :
+            return self.best_guess_for_number(value)
+        
+        keys = sorted(value.keys())
+        previous_x = float(keys[0])
+        previous_y = self.best_guess_for_number(value[keys[0]])
+        for key in keys:
+            next_x = float(key)
+            next_y = self.best_guess_for_number(value[key])
+            if next_x >= x :
+                break
+            else :            
+                previous_x = next_x 
+                previous_y = next_y
+        if  next_x == previous_x : 
+            return previous_y
+         
+        fraction = (next_x - x)/(next_x - previous_x)
+        return previous_y*fraction + next_y*(1.0-fraction)
+
+         
+        
 
     def setValue(self, path : str, value):
         """

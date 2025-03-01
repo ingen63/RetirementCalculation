@@ -219,3 +219,8 @@ class Data:
         if (wealth < 0.0):
             return True
         return False
+    
+    def get_actual_income(self) -> float: 
+        income = self.get_private_pension() + self.get_legal_pension()
+        income += self.get_wealth() * self.get_performance()/Config.MONTHS
+        return income

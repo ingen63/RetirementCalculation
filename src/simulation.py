@@ -2,9 +2,10 @@
 import logging
 import time
 from data import Data
-from event import BuyPropertyEvent, ChangeValueEvent, EarlyRetirmentEvent, EndSimulationEvent, EventHandler, LegalRetirmentEvent, RenewMortageEvent, SellPropertyEvent, StartSimulationEvent
+from event import BuyPropertyEvent, ChangeValueEvent, EarlyRetirmentEvent, EndSimulationEvent, EventHandler, LegalRetirmentEvent, RenewMortageEvent, RentPropertyEvent, SellPropertyEvent, StartSimulationEvent
 from config import Config
 from property import Property, PropertyManager
+from tax import TaxHandler
 
 
 class Simulation :
@@ -54,6 +55,10 @@ class Simulation :
         for property in PropertyManager.get_properties(Property.PLANNED) :
             if (property.get_buy_age() is not None) :
                 EventHandler.add_event(BuyPropertyEvent(config.age2months(property.get_buy_age()), property))
+                
+        for property in PropertyManager.get_properties(Property.PLANNED_FOR_RENT) :
+            if (property.get_buy_age() is not None) :
+                EventHandler.add_event(RentPropertyEvent(config.age2months(property.get_buy_age()), property))
 
         EventHandler.add_event(EndSimulationEvent(config.getEndMonth()))
 
@@ -61,6 +66,9 @@ class Simulation :
 
 
     def run(self, data : Data, config : Config) :
+        
+        
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Simulation started with age of {data.get_start_age()} until age of {data.get_end_age()}")
         
         actual_month = data.get_actual_month()
         end_months = data.get_end_simulation_month()
@@ -70,7 +78,7 @@ class Simulation :
             data.set_actual_month(month)
             EventHandler.before(month, config, data)
             
-            wealth_trend = self.__one_month(month, data)
+            wealth_trend = self.__one_month(month, data, config)
             
             EventHandler.after(month, config, data)
             new_wealth = data.get_wealth()
@@ -82,13 +90,13 @@ class Simulation :
             if (new_wealth <= 0.0) :
                 logging.info(f"Simulation finished with age {data.get_actual_age()} with no money left.")
                 break
-            
+        
         end_time = time.time()*1000.0   
         logging.info(f"Simulation finished after {end_time - start_time} ms")
-
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Simulation finished at age of {data.get_actual_age()} with wealth of {data.get_wealth() : .0f}")
     
     
-    def __one_month(self, month : int, data : Data) :
+    def __one_month(self, month : int, data : Data, config : Config) :
         
         # adjust spendigs accodording to inflation
         spending = data.get_spending()
@@ -114,13 +122,14 @@ class Simulation :
         if month % Config.MONTHS == 0 : # Income Tax and Capital Tax are applied once a year at december
             
             pk_capital  = pk_capital * (1.0 + data.get_pk_interest())
-            wealth = wealth * (1.0 - data.get_capital_taxrate())
-            wealth = wealth  - yearly_income*data.get_income_taxrate()
+            capital_tax = TaxHandler.capital_tax(config, wealth)
+            income_tax = TaxHandler.income_tax(config, yearly_income)
+            wealth -=  (capital_tax + income_tax)
             yearly_income = 0.0 # reset income for the next year
                            
 
        
-            logging.info(f"Age: {data.get_actual_age():5.2f}, Wealth: {wealth:7.0f} CHF, Capital: {pk_capital :7.2f} CHF Total Income: {total_income :6.0f} CHF, Total Expenses: {total_deductions : 6.0f} CHF.")
+            logging.info(f"Age: {data.get_actual_age():5.2f}, Wealth: {wealth:7.0f} CHF, Capital: {pk_capital :7.2f} CHF Total Income: {data.get_actual_income() :6.0f} CHF, Total Expenses: {total_deductions : 6.0f} CHF. Capital Tax: {capital_tax : 6.0f} CHF Income Tax: {income_tax : 6.0f}")
            
             
         data.set_wealth(wealth)

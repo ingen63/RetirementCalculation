@@ -1,39 +1,38 @@
 {
     "General": {
-        "StartAge": 63.167,
-        "StartMonth" : 5,
+        "StartAge": 62,
+        "StartMonth" : 3,
         "Wealth": 271665.00,
-        "EndAge": 120.0
+        "EndAge": 99.0
     },
     "Taxes" : {
-        "TaxRate": 105,
-        "Income":  { "10000" : 0.1, "50000" : 0.15, "100000" : 0.2, "200000" : 0.25, "1000000" : 0.3},
-        "Capital": { "10000" : 0.01, "50000" : 0.015, "100000" : 0.02, "200000" : 0.025, "1000000" : 0.03},
-        "PensionCapital": { "100000" : 0.002, "500000" : 0.004, "1000000" : 0.07, "2000000" : 0.01, "10000000" : 0.02}
+        "TaxRate" : "2.18",
+        "Income":  { "0": 0.0, "50000" : 0.04082, "100000" : 0.06207, "200000" : 0.08373, "400000" : 0.010528, "800000" : 0.011746},
+        "Capital": { "0" : 0.0, "100000" : 0.0001, "200000" : 0.0003, "500000" : 0.000602, "1000000" : 0.000942, "2000000" : 0.001383}
     },
 
     "Pension": {
         "EarlyRetirement" : 63.167,
         "LegalRetirement" : 65,
         "Private": {
-            "Capital": 1600517.0,
+            "Capital": 1494325.0,
             "LumpsumRatio": 0.5,
-            "ConversionRate": 0.042, 
+            "ConversionRate": 0.04198, 
             "Contribution":  {"50": 4500.0},
-            "Interest": {"50": 0.06}
+            "Interest": {"62": 0.06, "62.75" : 0.01}
         },
         "Legal": 1952.0
     },
 
     "MoneyFlows": {
-        "Savings":  {"50": 1000.0, "63.17": 0},
+        "Savings":  {"50": 1000.0, "62.00": 0},
         "Spendings": {"63.167":9635.00, "65.00": 7270.0},
-        "Extra": {"63.167": 88603.0}
+        "Extra": {"62.3" : -80000.0, "63.167": 88603.0}
     },
 
 
     "RealEstate": {
-        "ThresholdYears" : 2,
+        "ThresholdYears" : 1,
         "BuyAfterSell": "True",
         "Affordability": { 
             "Sustainability": 0.33, 
@@ -47,8 +46,8 @@
                 "Status": "Owned",
                 "Price": 725000.0,
                 "Worth":  1400000.0, 
-                "SellAge": 92.0,
-                "RentalIncome": 0.0,
+                "SellAge": 102.0,
+                "RentalIncome": 0,
                 "FixCosts": 600.0,
                 "Mortage": {       
                     "Value": 650000.0,
@@ -61,9 +60,10 @@
              {
                 "Name": "Wohnung",
                 "Status": "Planned",
-                "Price":  750000.0,
+                "Price":  650000.0,
                 "BuyAge": 102.0, 
-                "Mortage": {       
+                "Mortage": {
+                    "Value": 0.0,      
                     "Interest": 0.0105,
                     "Term": 10.0,
                     "Amortization": 550.0

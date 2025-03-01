@@ -3,8 +3,9 @@ import copy
 import logging
 import uuid
 from typing import List
-from data import Data
 from config import Config
+from data import Data
+
 
 
 class Mortage :
@@ -270,6 +271,7 @@ class PropertyManager :
         mortage = 0.0 if property.get_mortage() is None else property.get_mortage().get_value()
         data.set_wealth(data.get_wealth() + property.get_worth() - mortage) 
         logging.info(f"Property {property.get_name()} has been sold at age {data.get_actual_age():.2f} for a price of {property.get_worth():.0f} CHF and a profit of {property.get_worth() - property.get_price():.0f} CHF.") 
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Sold {property.get_name()} at age of {data.get_actual_age():.2f}.  Wealth after that is {data.get_wealth():.0f} CHF with income of {data.get_actual_income():.0f} ")
         return True
         
         
@@ -300,6 +302,7 @@ class PropertyManager :
             data.set_wealth(new_wealth)
         
         logging.info(f"Property {property.get_name()} has been bought at age {data.get_actual_age():.2f} for a price of {property.get_price():.0f} CHF and a mortage of {property.get_mortage().get_value():.0f} CHF.") 
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Bought {property.get_name()} at age of {data.get_actual_age():.2f}.  Wealth after that is {data.get_wealth():.0f}) CHF with income of {data.get_actual_income():.0f} ")
   
         
         return True
@@ -321,6 +324,7 @@ class PropertyManager :
             PropertyManager.add_expenses(property)
             data.set_wealth(data.get_wealth() - amortization)
             logging.debug(f"Mortgage has been renewed for {property.get_name()} at age {data.get_actual_age():.2f} for a new mortage of {property.get_mortage().get_value():.0f} CHF.")
+            logging.getLogger(Config.LOGGER_SUMMARY).info(f"Renewd mortage for {property.get_name()} at age of {data.get_actual_age():.2f}. Had to amortize {amortization :.0f} CHF")
         return True
         
         
@@ -330,6 +334,7 @@ class PropertyManager :
         new_mortage = copy.deepcopy(property.get_mortage())
         
         max_mortage = PropertyManager.max_mortage(property, data, config)
+        max_mortage = min(new_mortage.get_value(), max_mortage)
         if property.get_status() == Property.OWNED :
             renew = True
         else:
@@ -354,13 +359,20 @@ class PropertyManager :
         return new_mortage
 
     @staticmethod
-    def rent(data : Data, config : Config) -> bool :
-        properties = PropertyManager.get_properties(Property.PLANNED_FOR_RENT)
+    def rent(property : Property, data : Data) -> bool :
+        if (property is None) :
+            for property in PropertyManager.get_properties(Property.PLANNED_FOR_RENT) :
+                PropertyManager.rent(property, data)
+            return True 
+           
+        if (property.get_status() != Property.PLANNED_FOR_RENT) :
+            logging.debug(f"Cannot rent property {property.get_name()} as it is no longer planned for rent.")
+            return False
         
-        for property in properties :
-            property.set_status(Property.RENTED )
-            PropertyManager.add_expenses(property)
-            logging.info(f"Rented {property.get_name()} for {-1.0*property.get_rental_income()}.")    
+        property.set_status(Property.RENTED )
+        PropertyManager.add_expenses(property)
+        logging.info(f"Rented {property.get_name()} for {-1.0*property.get_rental_income()}.")   
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Rented {property.get_name()} at age of {data.get_actual_age() :.2f}.") 
         return True
 
     @staticmethod
@@ -370,7 +382,8 @@ class PropertyManager :
         for property in properties :
             property.set_status(Property.PLANNED_FOR_RENT)
             PropertyManager.remove_expenses(property)
-            logging.info(f"Finsihed renting {property.get_name()} for {-1.0*property.get_rental_income()}.")    
+            logging.info(f"Finsihed renting {property.get_name()} for {-1.0*property.get_rental_income()}.")   
+            logging.get_logger(Config.LOGGER_SUMMARY).info(f"Canceled appertement {property.get_name()} at age of {data.get_actual_age():.2f}.")  
             
         return True
     
@@ -411,6 +424,19 @@ class PropertyManager :
     def get_properties(type : str, low2high : bool = None) -> List[Property] :
         low2high = False if low2high is None else low2high
         return PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties, type),low2high)
+    
+    
+    @staticmethod
+    def get_income() -> float :
+       properties = PropertyManager.get_properties()
+       income = 0.0
+       for property in properties :
+        if property.get_status() == Property.RENTED :
+            income += max (0.0,property.get_rental_income())
+            
+    
+       return income
+        
 
 
 

@@ -154,8 +154,31 @@ def test_best_guess_for_number(config):
     assert config.best_guess_for_number([]) == []
     assert config.best_guess_for_number({}) == {}   
     assert config.best_guess_for_number(set([1,2,3])) == set([1,2,3])
-         
     
     
+def test_interpolate(config):
+    config.setValue("Test",{"1.0":1.0, "2.0" : "2.0", "3.0" : "3.0"})
+    
+    assert 1.0 == config.interpolate(0, "Test")
+    assert 1.0 == config.interpolate(0.99, "Test")    
+    assert 1.1 == config.interpolate(1.1, "Test")
+    assert 1.9 == config.interpolate(1.9, "Test")         
+    assert 2.0 == config.interpolate(2.0, "Test")    
+    assert 3.0 == config.interpolate(3.0, "Test")    
+    assert 3.0 == config.interpolate(4.0, "Test")   
+    
+    config.setValue("Test",{"3.0":-3.0, "2.0" : "-2.0", "1.0" : "-1.0"})
+    assert -1.0 == config.interpolate(0, "Test")
+    assert -1.0 == config.interpolate(0.99, "Test")    
+    assert -1.1 == config.interpolate(1.1, "Test")
+    assert -1.9 == config.interpolate(1.9, "Test")         
+    assert -2.0 == config.interpolate(2.0, "Test")    
+    assert -3.0 == config.interpolate(3.0, "Test")    
+    assert -3.0 == config.interpolate(4.0, "Test")   
+    
+    config.setValue("Test","10")
+    assert 10.0 == config.interpolate(0, "Test")
+    assert 10.0 == config.interpolate(5, "Test")    
+    assert 10.0 == config.interpolate(11, "Test")    
     
 
