@@ -14,9 +14,11 @@ class Data:
             Config.PENSION_PRIVATE_CONTRIBUTION : "pk_contribution",
             Config.PENSION_PRIVATE_INTEREST : "pk_interest",
             
+            Config.MONEYFLOWS_INCOME : "income",
             Config.MONEYFLOWS_SAVINGS : "savings",
             Config.MONEYFLOWS_SPENDINGS : "spending",
             Config.MONEYFLOWS_EXTRA : "extra",
+            
                         
             Config.CALCULATION_SINGLE_PERFORMANCE : "performance",
             Config.CALCULATION_SINGLE_INFLATION : "inflation"
@@ -25,6 +27,7 @@ class Data:
     
     __wealth = 0.0
     __spending = 0.0
+    __income = 0.0
     __private_pension = 0.0
     __legal_pension = 0.0
     
@@ -158,7 +161,14 @@ class Data:
     def set_pk_interest(self, value : float):
         value = 0.0 if (value is None) else value
         self.__pk_interest = value
+   
+    def get_income(self) -> float:
+        return self.__income
     
+    def set_income(self, value : float):
+        value = 0.0 if (value is None) else value
+        self.__income = value
+        
     def get_savings(self) -> float:
         return self.__savings
     
@@ -221,6 +231,6 @@ class Data:
         return False
     
     def get_actual_income(self) -> float: 
-        income = self.get_private_pension() + self.get_legal_pension()
+        income = self.get_private_pension() + self.get_legal_pension() + self.get_income()
         income += self.get_wealth() * self.get_performance()/Config.MONTHS
         return income

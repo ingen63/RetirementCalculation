@@ -1,5 +1,6 @@
 import json
 import copy
+import re
 
 
 class Config:
@@ -31,6 +32,7 @@ class Config:
     PENSION_LEGAL = "Pension.Legal"
 
     MONEYFLOWS = "MoneyFlows"
+    MONEYFLOWS_INCOME = "MoneyFlows.Income"
     MONEYFLOWS_SAVINGS = "MoneyFlows.Savings"
     MONEYFLOWS_SPENDINGS = "MoneyFlows.Spendings"
     MONEYFLOWS_EXTRA = "MoneyFlows.Extra"
@@ -85,27 +87,60 @@ class Config:
      
     def loads(self, json_data : str):
         self.__data = json.loads(json_data)
-        return self     
+        return self    
+    
+    def replace_variables(self):
+        # replace variables in the config
+        keys = self.defined_keys()
+
+        for key in list(keys):
+            values = self.getValue(key)
+            if isinstance(values, dict):
+                iteration_dict = values.copy()
+                
+                for sub_key in iteration_dict:
+                    new_key = self.__replace_variable(sub_key)
+                    if new_key is not None and new_key != sub_key:
+                        value = values[sub_key]
+                        del values[sub_key]
+                        values[new_key] = value
+
+            else:
+                value = self.__replace_variable(values)
+                if value is not None and value != values:
+                    self.setValue(key, value)
+
+                   
         
 
-    def getValue(self, path : str, defaultValue=None) :
-        """
-        Retrieve a value from a nested dictionary using a dot-separated path.
-        Args:
-            path (str): A dot-separated string representing the keys to traverse  in the nested dictionary.
-        Returns:
-        The value corresponding to the specified path if found, otherwise None.
-         """
- 
+    def __replace_variable(self, key):
+        if not isinstance(key, str): 
+            return None
+           
+        match = re.search(r'\{(.*?)\}', key)
+        if match :
+            replacement = match.group(1)
+            return str(self.getValue(replacement))
+          
+        return key 
+        
+        
+    def getNode(self, path : str):
         if path == '' or path is None:
             return None
         
         keys = path.split('.')
         current =  self.__data
+
+        for key in keys:
+            current = current[key]
+        return current
+    
+            
+    def getValue(self, path : str, defaultValue=None) :   
         try:
-            for key in keys:
-                current = current[key]
-            return self.best_guess_for_number(current)
+            node = self.getNode(path)
+            return self.best_guess_for_number(node)
         except KeyError:
         #    logging.debug(f"KeyError: {path} not found returning default value: {defaultValue}")
             return self.best_guess_for_number(defaultValue)
@@ -126,6 +161,7 @@ class Config:
             else :
                 return self.best_guess_for_number(previous)
         return self.best_guess_for_number(previous)
+    
     
     def interpolate(self, x : float, path : str, defaultValue=None) -> float:
         
@@ -247,7 +283,16 @@ class Config:
         self.__initialized = False
         
 
-
+    def custom_split(self, path : str):
+    # Regulärer Ausdruck zum Finden der Teile außerhalb geschweifter Klammern
+        parts = re.split(r'(\{.*?\})', path)  # Teile anhand der Klammern aufteilen
+        result = []
+        for part in parts:
+            if part.startswith("{") and part.endswith("}"):
+                result.append(part)  # Ganze Klammern beibehalten
+            else:
+                result.extend(part.split('.'))  # Split bei Punkten außerhalb Klammern
+        return [item for item in result if item]  # Leere Strings entfernen
     
  
     def clone(self):
@@ -290,7 +335,7 @@ class Config:
         months_since_start = month - self.getStartMonth()
         return self.getStartAge() + months_since_start/Config.MONTHS
          
-    def list_available_keys(self, data, prefix):
+    def list_available_keys(self, data : dict, prefix : str) -> list:
         keys = []
 
         for key in data:
@@ -312,22 +357,23 @@ class Config:
             variable = key.upper().replace('.', '_')
             print(f"    {variable} = \"{key}\"")
         
-     
-    def to_json(self):
-        data = {}
-        for key  in Config.__dict__:
-            if key.isupper() and not(key.startswith('__') and not key.endswith('__')):
-                keys = key.split('_')
-                current = data
-                for k in keys[:-1]:
-                    if k not in current:
-                        current[k] = {}
-                    current = current[k]
-                key = self.__getattribute__(key)
-                if (isinstance(key, str)):
-                   current[keys[-1]] = self.getValue(key, {})
-                
-        return json.dumps(data, indent=4)
+
+        
+    def defined_keys(self):
+        data = []
+        for variable  in Config.__dict__:
+            if variable.isupper() and not(variable.startswith('__') and not variable.endswith('__')):
+                key = self.__getattribute__(variable)
+                if isinstance(key,str) and key[0].isalpha() and key[0].isupper() :
+                   data.append(key)
+         
+         
+
+        # Filtern der Leaves
+        leaves = [item for item in data if not any(item + "." == other[:len(item) + 1] for other in data)]
+
+        return leaves
+       
         
     
     def getStartAge(self) -> float:

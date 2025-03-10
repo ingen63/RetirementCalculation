@@ -1,7 +1,7 @@
 {
     "General": {
-        "StartAge": 62,
-        "StartMonth" : 3,
+        "StartAge": 56.8333,
+        "StartMonth" : 1,
         "Wealth": 271665.00,
         "EndAge": 99.0
     },
@@ -12,27 +12,28 @@
     },
 
     "Pension": {
-        "EarlyRetirement" : 63.167,
+        "EarlyRetirement" : 63.176,
         "LegalRetirement" : 65,
         "Private": {
-            "Capital": 1494325.0,
-            "LumpsumRatio": 0.5,
+            "Capital": 833234.0,
+            "LumpsumRatio": 0.65,
             "ConversionRate": 0.04198, 
-            "Contribution":  {"50": 4500.0},
-            "Interest": {"62": 0.06, "62.75" : 0.01}
+            "Contribution":  {"50": 4554.0},
+            "Interest": {"56.75": 0.035, "57.75" : 0.03, "58.75" : 0.095, "59.75" : 0.07, "60.75" : 0.09,  "61.75" : 0.09,  "62.75" : 0.07, "63.75" : 0.01}
         },
         "Legal": 1952.0
     },
 
     "MoneyFlows": {
-        "Savings":  {"50": 1000.0, "62.00": 0},
-        "Spendings": {"63.167":9635.00, "65.00": 7270.0},
-        "Extra": {"62.3" : -80000.0, "63.167": 88603.0}
+        "Savings":  {"50": 1000.0, "{Pension.EarlyRetirement}": 0.0},
+        "Income": {"50.00": 9800.00, "{Pension.EarlyRetirement}" : 0.0},
+        "Spendings": { "50.0":9229.00, "65.00": 7270.0},
+        "Extra": {"62.3" : -80000.0, "{Pension.EarlyRetirement}": 80600.0}
     },
 
 
     "RealEstate": {
-        "ThresholdYears" : 1,
+        "ThresholdYears" : 2,
         "BuyAfterSell": "True",
         "Affordability": { 
             "Sustainability": 0.33, 

@@ -101,6 +101,8 @@ class Simulation :
         # adjust spendigs accodording to inflation
         spending = data.get_spending()
         spending *= (1.0 + data.get_inflation())**(1.0/Config.MONTHS)
+        
+        income = data.get_income()
                  
         legal_pension = data.get_legal_pension()
         if month % Config.MONTHS == 0 : # Legal pension is adjusted once a year for inflation       
@@ -109,10 +111,10 @@ class Simulation :
         private_pension = data.get_private_pension()
         monthly_performance = ((1.0 + data.get_performance())**(1.0/Config.MONTHS)) - 1
             
-        yearly_income = data.get_yearly_income() + private_pension   + legal_pension 
+        yearly_income = data.get_yearly_income() + private_pension   + legal_pension  + income
         total_deductions =  spending + PropertyManager.get_properties_expenses()
           
-        total_income = private_pension + legal_pension
+        total_income = private_pension + legal_pension + income
         wealth_trend = total_income - total_deductions + data.get_wealth()*monthly_performance
             
         wealth = data.get_wealth() + data.get_savings() + data.get_extra() + total_income - total_deductions

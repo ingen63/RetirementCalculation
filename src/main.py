@@ -9,9 +9,15 @@ def main(file : str, log_level : int, overrides : str) :
     
     intialize_logging(log_level)
     
+    logging.info("------------------------------------------------------------------------")
+    logging.info("          R E T I R E M E N T   S I M U L A T I O N   T O O L           ")
+    logging.info("------------------------------------------------------------------------")
+
+    
     if (file is None) :
         file = "./data/config.json"
     config = Config().load(file)
+    config.replace_variables()
     override(config, overrides)
     
     simulation = Simulation()
