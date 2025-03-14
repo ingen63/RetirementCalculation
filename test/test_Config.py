@@ -17,7 +17,23 @@ def test_load(config):
         pytest.fail(f"Load failed with exception: {e}")
     
                     
-        
+
+def test_getNode(config):
+
+
+    assert config.setValue("Property.Actual.Sell", 100) is None
+    assert config.getNode("Property.Actual.Sell") == 100
+    
+
+    assert config.setValue("Property.Actual.Sell", "100") == 100
+    assert config.getNode("Property.Actual.Sell") == '100'
+    
+    try :
+        config.getNode("Unknown.Affordability")
+        pytest.fail("Expected an KeyError for non-existent key")
+    except KeyError:
+        pass
+     
             
 
 def test_getValue(config):
@@ -54,6 +70,12 @@ def test_setValue(config):
     assert config.setValue("Test.Test.Test" , 1) is None
     assert config.getValue("Test.Test.Test") == 1
    
+    assert config.setValue("Test.Test.Test" , 1.0) == 1
+    assert config.getValue("Test.Test.Test") == 1.0
+    
+    assert config.setValue("Test.Test.Test" , "1.1") == 1.0
+    assert config.getValue("Test.Test.Test") == 1.1
+    
     assert config.setValue(None,None) is None
     assert config.setValue('',None) is None
     
@@ -64,8 +86,8 @@ def test_setValue(config):
     assert config.getValue("Property.Actual.Sell") == 150
     
     assert config.setValue(Config.CALCULATION, {}) is None
-    assert config.setValue(Config.CALCULATION_SINGLE_INFLATION , 0.01) is None
-    assert config.getValue(Config.CALCULATION_SINGLE_INFLATION) == 0.01
+    assert config.setValue(Config.GENERAL_INFLATION , 0.01) is None
+    assert config.getValue(Config.GENERAL_INFLATION) == 0.01
 
 
 def test_delete(config):

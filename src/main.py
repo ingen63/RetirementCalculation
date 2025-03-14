@@ -2,6 +2,7 @@
 import logging
 import argparse
 from config import Config
+from output import Output
 from simulation import Simulation
 
 
@@ -20,9 +21,41 @@ def main(file : str, log_level : int, overrides : str) :
     config.replace_variables()
     override(config, overrides)
     
+    if config.getValue(Config.CALCULATION_METHOD) == "Single":
+        Output.add_result(Output.SCENARIO_NAME,"Single simulation")
+
+        start_single_simulation(config)
+        
+    elif config.getValue(Config.CALCULATION_METHOD) == "Scenarios":
+        scenarios(config)
+    else:
+        logging.error(f"Unsupported calculation method '{config.getValue(Config.CALCULATION_METHOD)}'")
+        
+        
+    print(" ------------------------------------------------------------------------------------------------")
+    print()
+    Output.print()
+    
+def scenarios(config : Config): 
+    
+    scenarios = config.getValue(Config.CALCULATION_SCENARIOS)
+    Output.set_scenarios(len(scenarios))
+    for scenario in scenarios: 
+        scenarion_config = config.clone()
+
+        scenarion_config.setValues(scenario[Config.CALCULATION_SCENARIOS_PARAMETERS])
+        Output.add_result(Output.SCENARIO_NAME,scenario[Config.CALCULATION_SCENARIOS_NAME])
+        start_single_simulation(scenarion_config) 
+        Output.next_scenario()
+        
+
+    
+def start_single_simulation(config: Config) :
     simulation = Simulation()
     data = simulation.init(config)
+    Output.add_result(Output.DESCRIPTION,f"Age: {config.getEarlyRetirementAge() : .2f} Ratio: {data.get_lumpsum_ratio()*100: .2f}%")
     simulation.run(data, config)
+    
     
 def override(config : Config, overrides : str) :
     if (overrides is None) :

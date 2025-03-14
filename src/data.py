@@ -7,7 +7,7 @@ from config import Config
 
 class Data:
     
-    __mapping = {
+    __change_value_events = {
             Config.TAXES_INCOME : "income_taxrate",
             Config.TAXES_CAPITAL : "capital_taxrate",
 
@@ -16,13 +16,12 @@ class Data:
             
             Config.MONEYFLOWS_INCOME : "income",
             Config.MONEYFLOWS_SAVINGS : "savings",
-            Config.MONEYFLOWS_SPENDINGS : "spending",
-            Config.MONEYFLOWS_EXTRA : "extra",
-            
+            Config.MONEYFLOWS_SPENDINGS : "spending",          
                         
-            Config.CALCULATION_SINGLE_PERFORMANCE : "performance",
-            Config.CALCULATION_SINGLE_INFLATION : "inflation"
+            Config.GENERAL_PERFORMANCE : "performance",
+            Config.GENERAL_INFLATION : "inflation"
         }
+    
     
     
     __wealth = 0.0
@@ -45,6 +44,7 @@ class Data:
     __savings = 0.0
     
     __lumpsum = 0.0
+    __lumpsum_ratio = 0.0
     __extra = 0.0
     
     __yearly_income = 0.0
@@ -68,7 +68,7 @@ class Data:
         
         
     def set_value(self, key, value):
-        attr = self.__mapping[key]
+        attr = self.__change_value_events[key]
         if (hasattr(self, f"set_{attr}")) :
             setter = getattr(self,  f"set_{attr}")
             try:
@@ -183,6 +183,13 @@ class Data:
         value = 0.0 if (value is None) else value
         self.__lumpsum = value
     
+    def get_lumpsum_ratio(self) -> float:
+        return self.__lumpsum_ratio
+    
+    def set_lumpsum_ratio(self, value : float):
+        value = 0.0 if (value is None) else value
+        self.__lumpsum_ratio = value
+        
     def get_extra(self) -> float:
         return self.__extra
     
@@ -221,8 +228,10 @@ class Data:
     def get_actual_age(self) -> float:
         return self.__actual_age
         
-    def get_mapping_keys(self) -> set:
-        return self.__mapping.keys()
+    
+    def get_change_value_event(self) -> set:
+        return self.__change_value_events.keys()
+    
     
     def time_to_sell(self) -> bool:
         wealth = self.get_wealth() - self.get_threshold_months()*self.get_spending()

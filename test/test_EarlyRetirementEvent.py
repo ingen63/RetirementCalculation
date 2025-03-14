@@ -1,4 +1,4 @@
-import json
+
 import pytest
 from config import Config
 from data import Data

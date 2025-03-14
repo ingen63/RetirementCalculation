@@ -12,11 +12,15 @@ class Config:
     GENERAL_STARTMONTH = "General.StartMonth"
     GENERAL_ENDAGE = "General.EndAge"
     GENERAL_WEALTH = "General.Wealth"
+    GENERAL_INFLATION = "General.Inflation"
+    GENERAL_PERFORMANCE = "General.Performance"
     
     TAXES_TAXRATE = "Taxes.TaxRate"
     TAXES_INCOME = "Taxes.Income"
     TAXES_CAPITAL = "Taxes.Capital"
     TAXES_PENSIONCAPITAL = "Taxes.PensionCapital"
+    TAXES_SALES = "Taxes.Sales"
+    TAXES_SALESTAXREDUCTION = "Taxes.SalesTaxReduction"
     
 
     PENSION = "Pension"
@@ -50,12 +54,14 @@ class Config:
     CALCULATION = "Calculation"
     CALCULATION_METHOD = "Calculation.Method"
     CALCULATION_SINGLE = "Calculation.Single"
-    CALCULATION_SINGLE_INFLATION = "Calculation.Single.Inflation"
-    CALCULATION_SINGLE_PERFORMANCE = "Calculation.Single.Performance"
+
     CALCULATION_HISTORICAL = "Calculation.Historical"
     CALCULATION_HISTORICAL_PORTFOLIOBALANCE = "Calculation.Historical.portfolioBalance"
     CALCULATION_HISTORICAL_HISTORICALDATA = "Calculation.Historical.historicalData"
     CALCULATION_SCENARIOS = "Calculation.Scenarios"
+    CALCULATION_SCENARIOS_NAME = "Name"
+    CALCULATION_SCENARIOS_DESCRIPTION = "Description"
+    CALCULATION_SCENARIOS_PARAMETERS = "Parameters"
 
     DEFAULT_STARTAGE = 50.0
     DEFAULT_MAXPERIOD = 30.0
@@ -63,8 +69,7 @@ class Config:
     
     DEFAULT_REALESTATE_THRESHOLDYEARS = 2
     DEFAULT_REALESTATE_BUYAFTERSELL = True
-    
-    DEFAULT_TAXES_PENSIONCAPITAL = [-9.6001E-15, 8.034e-8,4.0908e-2]
+
     
     DEFAULT_STARTMONTH = 1
     DEFAULT_ENDMONTH = DEFAULT_MAXPERIOD*MONTHS + DEFAULT_STARTMONTH
@@ -125,10 +130,29 @@ class Config:
         return key 
         
         
-    def getNode(self, path : str):
+    def getNode(self, path: str):
+        """
+        Retrieves a nested value from the configuration data based on a dot-separated path.
+
+        This function traverses the nested dictionary structure of the configuration data
+        using the provided path. Each part of the path separated by dots represents a level
+        in the nested structure.
+
+        Args:
+            path (str): A dot-separated string representing the path to the desired node
+                        in the configuration data.
+
+        Returns:
+            The value at the specified path in the configuration data. If the path is empty
+            or None, returns None. If the path is valid, returns the corresponding value,
+            which could be a nested dictionary, a list, or a primitive value.
+
+        Raises:
+            KeyError: If any part of the path does not exist in the nested structure.
+        """
         if path == '' or path is None:
             return None
-        
+
         keys = path.split('.')
         current =  self.__data
 
@@ -137,22 +161,55 @@ class Config:
         return current
     
             
-    def getValue(self, path : str, defaultValue=None) :   
+    def getValue(self, path : str, defaultValue=None) :
+        """
+        Retrieves a nested value from the configuration data based on a dot-separated path.
+
+        This function traverses the nested dictionary structure of the configuration data
+        using the provided path. Each part of the path separated by dots represents a level
+        in the nested structure.
+
+        Args:
+            path (str): A dot-separated string representing the path to the desired node
+                        in the configuration data.
+            defaultValue: If any part of the path does not exist in the nested structure it returns the defaultValue
+            
+        Returns:
+            The value at the specified path in the configuration data. If the path is empty
+            or None, returns None. If the path is valid, returns the corresponding value,
+            which could be a nested dictionary, a list, or a primitive value. For primitive values it will try to convert the value to a number.
+            
+        """   
         try:
             node = self.getNode(path)
             return self.best_guess_for_number(node)
         except KeyError:
-        #    logging.debug(f"KeyError: {path} not found returning default value: {defaultValue}")
             return self.best_guess_for_number(defaultValue)
         
     
-    def getActualValue(self, month : int, path : str, defaultValue=None) -> float:
-        
+    def getActualValue(self, month: int, path: str, defaultValue=None) -> float:
+        """
+        Retrieves the actual value for a given month based on a configuration path.
+
+        This function looks up a value in the configuration based on the provided path,
+        and returns the appropriate value for the specified month. If the value is a
+        dictionary of time-based entries, it finds the most recent applicable value.
+
+        Args:
+            month (int): The month for which to retrieve the value.
+            path (str): The configuration path to look up.
+            defaultValue (Any, optional): The default value to return if no value is found. Defaults to None.
+
+        Returns:
+            float: The actual value for the specified month. If the value is not time-based,
+                   it returns the direct value. For time-based values, it returns the most
+                   recent applicable value converted to a number if possible.
+        """
         value = self.getValue(path, defaultValue)
-        
+
         if value is None or not isinstance(value, dict) :
             return value
-        
+
         previous = defaultValue
         for key in sorted(value.keys()):   # find a better algorithm sort is n"log(n
             month_key = self.age2months(float(key)) 
@@ -163,28 +220,44 @@ class Config:
         return self.best_guess_for_number(previous)
     
     
-    def interpolate(self, x : float, path : str, defaultValue=None) -> float:
-        
-                
+    def interpolate(self, x: float, path: str, defaultValue=None) -> float:
+        """
+        Interpolates a value based on a given x-coordinate and a configuration path.
+
+        This function retrieves a set of key-value pairs from the configuration using the provided path,
+        and performs linear interpolation to estimate the y-value corresponding to the given x-value.
+
+        Args:
+            x (float): The x-coordinate for which to interpolate the y-value.
+            path (str): The configuration path to retrieve the interpolation data.
+            defaultValue (Any, optional): The default value to return if no data is found at the given path. Defaults to None.
+
+        Returns:
+            float: The interpolated y-value corresponding to the input x-value.
+                   If the input data is not a dictionary or is None, returns the best numeric guess of the input value.
+                   If x is outside the range of the data, returns the y-value of the nearest data point.
+                   If there's only one data point, returns that y-value.
+
+        """
         value = self.getValue(path, defaultValue)
-        
-        if value is None or not isinstance(value, dict) :
+
+        if value is None or not isinstance(value, dict):
             return self.best_guess_for_number(value)
-        
+
         keys = sorted(value.keys())
         previous_x = float(keys[0])
         previous_y = self.best_guess_for_number(value[keys[0]])
         for key in keys:
             next_x = float(key)
             next_y = self.best_guess_for_number(value[key])
-            if next_x >= x :
+            if next_x >= x:
                 break
-            else :            
+            else:
                 previous_x = next_x 
                 previous_y = next_y
-        if  next_x == previous_x : 
+        if next_x == previous_x:
             return previous_y
-         
+
         fraction = (next_x - x)/(next_x - previous_x)
         return previous_y*fraction + next_y*(1.0-fraction)
 
@@ -221,9 +294,16 @@ class Config:
                 old_value = None
                 if (keys[i] in current): # key exists in current
                     old_value = current[keys[i]]
-                current[keys[i]] = self.best_guess_for_number(value)
+                current[keys[i]] = value
              #   logging.debug(f"i: {i} key: {keys[i]} keys: {keys} current: {current} __data: {self.__data}")
                 return old_value
+            
+    def setValues(self, values : dict) :
+        values_config = Config(values)
+        for key in values_config.defined_keys():
+            if values_config.exists(key):
+                value = values_config.getValue(key)
+                self.setValue(key, value)
             
 
     def exists(self, path : str):
@@ -282,17 +362,6 @@ class Config:
         self.__data = {}
         self.__initialized = False
         
-
-    def custom_split(self, path : str):
-    # Regulärer Ausdruck zum Finden der Teile außerhalb geschweifter Klammern
-        parts = re.split(r'(\{.*?\})', path)  # Teile anhand der Klammern aufteilen
-        result = []
-        for part in parts:
-            if part.startswith("{") and part.endswith("}"):
-                result.append(part)  # Ganze Klammern beibehalten
-            else:
-                result.extend(part.split('.'))  # Split bei Punkten außerhalb Klammern
-        return [item for item in result if item]  # Leere Strings entfernen
     
  
     def clone(self):
@@ -308,7 +377,25 @@ class Config:
         return data
   
     def best_guess_for_number(self, value):
-    
+        """
+        Attempts to convert a given value to the most appropriate numeric type (int or float).
+
+        This function tries to interpret the input as a number. If the input is a string
+        representation of an integer or float, it will be converted to the corresponding
+        numeric type. If conversion is not possible, the original value is returned.
+
+        Args:
+            value: The value to be converted. Can be of any type.
+
+        Returns:
+            int: If the value represents an integer (no decimal part).
+            float: If the value represents a floating-point number.
+            Any: The original value if it cannot be converted to a number.
+
+        Note:
+            - For string inputs, it uses "." as the decimal separator.
+            - If the input is already a numeric type, it will be returned as-is.
+        """
         try:
             keys = value.split(".")
             number = keys[0]

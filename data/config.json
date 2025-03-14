@@ -1,25 +1,30 @@
 {
     "General": {
-        "StartAge": 56.8333,
-        "StartMonth" : 1,
+        "StartAge": 62,
+        "StartMonth" : 3,
         "Wealth": 271665.00,
-        "EndAge": 99.0
+        "EndAge": 195.0,
+        "Inflation": 0.01,
+        "Performance": 0.04   
     },
     "Taxes" : {
         "TaxRate" : "2.18",
         "Income":  { "0": 0.0, "50000" : 0.04082, "100000" : 0.06207, "200000" : 0.08373, "400000" : 0.010528, "800000" : 0.011746},
-        "Capital": { "0" : 0.0, "100000" : 0.0001, "200000" : 0.0003, "500000" : 0.000602, "1000000" : 0.000942, "2000000" : 0.001383}
+        "Capital": { "0" : 0.0, "100000" : 0.0001, "200000" : 0.0003, "500000" : 0.000602, "1000000" : 0.000942, "2000000" : 0.001383},
+        "PensionCapital": { "0" : 0.02, "250000" : 0.02, "500000" : 0.02332, "750000" : 0.03312, "1000000" : 0.04082, "2000000" : 0.062070, "4000000" : 0.08373},
+        "Sales" : { "4000" : 0.1, "6000" : 0.15, "8000" : 0.2, "12000" : 0.25, "20000" : 0.3, "50000" : 0.35, "100000": 0.4, "10000000" : 0.4}, 
+        "SalesTaxReduction": 0.44
     },
 
     "Pension": {
-        "EarlyRetirement" : 63.176,
+        "EarlyRetirement" : 63.25,
         "LegalRetirement" : 65,
         "Private": {
-            "Capital": 833234.0,
+            "Capital": 1494352.0,
             "LumpsumRatio": 0.65,
-            "ConversionRate": 0.04198, 
-            "Contribution":  {"50": 4554.0},
-            "Interest": {"56.75": 0.035, "57.75" : 0.03, "58.75" : 0.095, "59.75" : 0.07, "60.75" : 0.09,  "61.75" : 0.09,  "62.75" : 0.07, "63.75" : 0.01}
+            "ConversionRate": 0.0408, 
+            "Contribution":  {"50": 4554.0 },
+            "Interest": {"56.75": 0.035, "57.75" : 0.03, "58.75" : 0.095, "59.75" : 0.07, "60.75" : 0.09,  "61.75" : 0.09,  "62.75" : 0.025, "63.75" : 0.01}
         },
         "Legal": 1952.0
     },
@@ -27,8 +32,8 @@
     "MoneyFlows": {
         "Savings":  {"50": 1000.0, "{Pension.EarlyRetirement}": 0.0},
         "Income": {"50.00": 9800.00, "{Pension.EarlyRetirement}" : 0.0},
-        "Spendings": { "50.0":9229.00, "65.00": 7270.0},
-        "Extra": {"62.3" : -80000.0, "{Pension.EarlyRetirement}": 80600.0}
+        "Spendings": {"62.5" : 9230.0, "65.0" : 7570.0, "70.00" : 7000.0, "80.00" : 6500.0},
+        "Extra": {"62.3" : -75000.0, "{Pension.EarlyRetirement}": 88600.0}
     },
 
 
@@ -45,15 +50,15 @@
               {
                 "Name": "Haus",
                 "Status": "Owned",
-                "Price": 725000.0,
-                "Worth":  1400000.0, 
+                "Price": 745000.0,
+                "Worth":  1590669.0, 
                 "SellAge": 102.0,
                 "RentalIncome": 0,
                 "FixCosts": 600.0,
                 "Mortage": {       
                     "Value": 650000.0,
-                    "Interest": 0.0105,
-                    "StartAge": 62.0,
+                    "Interest": 0.011,
+                    "StartAge": 62.5,
                     "Term": 10.0,
                     "Amortization": 550.0
                 } 
@@ -61,11 +66,11 @@
              {
                 "Name": "Wohnung",
                 "Status": "Planned",
-                "Price":  650000.0,
+                "Price":  750000.0,
                 "BuyAge": 102.0, 
                 "Mortage": {
                     "Value": 0.0,      
-                    "Interest": 0.0105,
+                    "Interest": 0.011,
                     "Term": 10.0,
                     "Amortization": 550.0
                 }    
@@ -78,20 +83,52 @@
         ]
     },
     "Calculation": {
-        "Method": "Single",
+        "Method": "Scenarios",
         "Single": {
-            "Inflation": 0.01,
-            "Performance": 0.04              
+           
         },
         "Scenarios": [
             {
-                "Name": "Early with Age 62.75",
-                "Descripton" : "Age: 62.75, Ration: 50% ",
+                "Name": "Early with Age 63.25",
                 "Parameters" : {
-                    "General" :{
-                        "StartAge:": 62.75,
-                        "StartMonth" : 5,
-                        "Wealth": 271665.00
+                    "Pension": {
+                        "EarlyRetirement" : 63.25,
+                        "Private": {
+                            "LumpsumRatio": 0.5
+                        }
+                    }
+                }
+            },
+            {
+                "Name": "Early with Age 63.25",
+                "Parameters": {
+                    "Pension": {
+                        "EarlyRetirement" : 63.25,
+                        "Private": {
+                            "LumpsumRatio": 0.65
+                        }
+                    }
+                }
+            },
+            {
+                "Name": "Early with Age 63.25",
+                "Parameters": {
+                    "Pension": {
+                        "EarlyRetirement" : 63.25,
+                        "Private": {
+                            "LumpsumRatio": 0.75
+                        }
+                    }
+                }
+            },
+            {
+                "Name": "Early with Age 63.25",
+                "Parameters": {
+                    "Pension": {
+                        "EarlyRetirement" : 63.25,
+                        "Private": {
+                            "LumpsumRatio": 1.0
+                        }
                     }
                 }
             }

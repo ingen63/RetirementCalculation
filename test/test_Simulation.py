@@ -88,8 +88,8 @@ def test_simulate_before_retirement_static(config):
     simulation = Simulation()
 
     config.setValue(Config.GENERAL_ENDAGE, 55)
-    config.setValue(Config.CALCULATION_SINGLE_PERFORMANCE,0.0)
-    config.setValue(Config.CALCULATION_SINGLE_INFLATION,0.0)
+    config.setValue(Config.GENERAL_INFLATION,0.0)
+    config.setValue(Config.GENERAL_INFLATION,0.0)
     config.setValue(Config.PENSION_PRIVATE_INTEREST,0.0)
     
     data = simulation.init(config)
@@ -133,8 +133,8 @@ def test_simulate_before_retirement_dynamic(config):
     config.setValue(Config.PENSION_EARLYRETIREMENT,65)
     config.setValue(Config.PENSION_LEGALRETIREMENT,65)
     config.setValue(Config.GENERAL_ENDAGE, 55)
-    config.setValue(Config.CALCULATION_SINGLE_PERFORMANCE,0.0)
-    config.setValue(Config.CALCULATION_SINGLE_INFLATION,0.0)
+    config.setValue(Config.GENERAL_PERFORMANCE,0.0)
+    config.setValue(Config.GENERAL_INFLATION,0.0)
     config.setValue(Config.MONEYFLOWS_SAVINGS, 500.0)   
     config.setValue(Config.MONEYFLOWS_SPENDINGS, 0.0)
     config.setValue(Config.MONEYFLOWS_EXTRA, {65 : 0.0})
@@ -159,7 +159,7 @@ def test_simulate_before_retirement_dynamic(config):
     
 
     config.setValue(Config.MONEYFLOWS_SAVINGS, {"40": 500.0,"55": 1500.0})    
-    config.setValue(Config.CALCULATION_SINGLE_PERFORMANCE, {"40": 0.04, "60" : 0.06})
+    config.setValue(Config.GENERAL_PERFORMANCE, {"40": 0.04, "60" : 0.06})
     data = simulation.init(config)
     simulation.run(data, config)
     
@@ -193,9 +193,9 @@ def test_simulate_early_retirement_dynamic_inflation(config):
     config.setValue(Config.PENSION_EARLYRETIREMENT,63) 
     config.setValue(Config.GENERAL_ENDAGE, 65.0 - 1/12)
     config.setValue(Config.MONEYFLOWS_SAVINGS, {"40": 500.0,"55": 1500.0})    
-    config.setValue(Config.CALCULATION_SINGLE_PERFORMANCE, {"40": 0.04, "60" : 0.06})
+    config.setValue(Config.GENERAL_PERFORMANCE, {"40": 0.04, "60" : 0.06})
     config.setValue(Config.PENSION_PRIVATE_INTEREST, {"40": 0.04,"59.75": 0.06, "60.75" : 0.08, "62.75" : 0.06})
-    config.setValue(Config.CALCULATION_SINGLE_INFLATION,0.0)
+    config.setValue(Config.GENERAL_INFLATION,0.0)
     config.setValue(Config.MONEYFLOWS_EXTRA, {63 : 63000.0})
        
     data = simulation.init(config)
@@ -205,7 +205,7 @@ def test_simulate_early_retirement_dynamic_inflation(config):
     assert round(data.get_wealth(),2) ==  976567.33
     assert round(data.get_pk_capital(),2) == 0.00
     
-    config.setValue(Config.CALCULATION_SINGLE_INFLATION, {"40": 0.01,"60": 0.02}) 
+    config.setValue(Config.GENERAL_INFLATION, {"40": 0.01,"60": 0.02}) 
           
     data = simulation.init(config)
     simulation.run(data, config)
@@ -221,9 +221,9 @@ def test_simulate_legal_retirement_dynamic_inflation(config):
     config.setValue(Config.GENERAL_ENDAGE, 65.0 )
     config.setValue(Config.MONEYFLOWS_SAVINGS, {"40": 500.0,"55": 1500.0})  
     config.setValue(Config.MONEYFLOWS_SPENDINGS, {"63": 6300, "65": 6500.00})  
-    config.setValue(Config.CALCULATION_SINGLE_PERFORMANCE, {"40": 0.04, "60" : 0.06})
+    config.setValue(Config.GENERAL_PERFORMANCE, {"40": 0.04, "60" : 0.06})
     config.setValue(Config.PENSION_PRIVATE_INTEREST, {"40": 0.04,"59.75": 0.06, "60.75" : 0.08, "62.75" : 0.06})
-    config.setValue(Config.CALCULATION_SINGLE_INFLATION, {"40": 0.01,"60": 0.02}) 
+    config.setValue(Config.GENERAL_INFLATION, {"40": 0.01,"60": 0.02}) 
     config.setValue(Config.MONEYFLOWS_EXTRA, {63 : 63000.0})
        
     data = simulation.init(config)

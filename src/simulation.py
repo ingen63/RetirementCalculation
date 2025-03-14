@@ -2,13 +2,16 @@
 import logging
 import time
 from data import Data
-from event import BuyPropertyEvent, ChangeValueEvent, EarlyRetirmentEvent, EndSimulationEvent, EventHandler, LegalRetirmentEvent, RenewMortageEvent, RentPropertyEvent, SellPropertyEvent, StartSimulationEvent
+from event import BuyPropertyEvent, ChangeValueEvent, EarlyRetirmentEvent, EndSimulationEvent, EventHandler, LegalRetirmentEvent, LumpsumEvent, MoneyFlowExtraEvent, RenewMortageEvent, RentPropertyEvent, SellPropertyEvent, StartSimulationEvent
 from config import Config
+from output import Output
 from property import Property, PropertyManager
 from tax import TaxHandler
 
 
 class Simulation :
+    
+    output = Output()
 
     def   init(self, config : Config) -> Data :
         
@@ -17,29 +20,52 @@ class Simulation :
         data = Data(config.getStartAge(), config.getEndAge(), config.getStartMonth())
 
         EventHandler.add_event(StartSimulationEvent(config.getStartMonth()))
-
-        # create all change events
-        keys = data.get_mapping_keys()
-
-        for key in keys:
-            values = config.getValue(key)
-            if (isinstance(values,dict)) :
-                for age in values.keys():
-                    if config.best_guess_for_number(age) < data.get_start_age() :
-                       change_event_month = config.getStartMonth()    
-                    else :
-                        change_event_month = config.age2months(age)
-                    EventHandler.add_event(ChangeValueEvent(change_event_month, key))
-            else :
-                data.set_value(key, config.best_guess_for_number(values)) 
-               
-         # Early retirement
+        
+                 # Early retirement
         early_retirment_month = config.age2months(config.getEarlyRetirementAge())
         EventHandler.add_event(EarlyRetirmentEvent(early_retirment_month))
 
         # Legal retirement
         legal_retirment_month = config.age2months(config.getLegalRetirementAge())
-        EventHandler.add_event(LegalRetirmentEvent(legal_retirment_month))       
+        EventHandler.add_event(LegalRetirmentEvent(legal_retirment_month))   
+
+        # create all change events
+        keys = data.get_change_value_event()
+        for key in keys:
+            values = config.getValue(key)
+            if (isinstance(values,dict)) :
+                for age in values.keys() :
+                    change_event_month = config.getStartMonth() if config.best_guess_for_number(age) < data.get_start_age() else config.age2months(age)
+                    EventHandler.add_event(ChangeValueEvent(change_event_month, key))
+            else :
+                data.set_value(key, config.best_guess_for_number(values)) 
+                
+        values = config.getValue(Config.MONEYFLOWS_EXTRA)
+        if (isinstance(values,dict)) :
+            for age in values.keys():
+                change_event_month = config.getStartMonth() if config.best_guess_for_number(age) < data.get_start_age() else config.age2months(age)
+                EventHandler.add_event(MoneyFlowExtraEvent(change_event_month,float(values[age])))
+        else :
+            EventHandler.add_event(MoneyFlowExtraEvent(config.getStartMonth(),float(values)))
+            
+        values = config.getValue(Config.PENSION_PRIVATE_LUMPSUMRATIO)
+        lumpsum_ratio = 0.0
+        if (isinstance(values,dict)) :
+            for age in values.keys():
+                lumpsum_ratio += float(values[age])
+            factor = 1 - lumpsum_ratio
+            for age in dict(sorted(values.items())).keys():
+                change_event_month = config.getStartMonth() if config.best_guess_for_number(age) < data.get_start_age() else config.age2months(age)
+                value = values[age]
+                EventHandler.add_event(LumpsumEvent(change_event_month,value/factor))
+                factor = factor - value
+        else :
+            EventHandler.add_event(LumpsumEvent(config.age2months(config.getEarlyRetirementAge()),float(values)))
+            lumpsum_ratio = float(values)
+            
+        data.set_lumpsum_ratio(lumpsum_ratio)
+               
+    
                
         # initialize properties
         properties = config.getValue(Config.REALESTATE_PROPERTIES,[])
@@ -70,6 +96,11 @@ class Simulation :
         
         logging.getLogger(Config.LOGGER_SUMMARY).info(f"Simulation started with age of {data.get_start_age()} until age of {data.get_end_age()}")
         
+        Output.add_result(Output.START_AGE, f"{data.get_start_age():.2f}")
+        Output.add_result(Output.LEGAL_RETIREMENT_AGE, f"{config.getLegalRetirementAge():.2f}")
+        Output.add_result(Output.EARLY_RETIREMENT_AGE, f"{config.getEarlyRetirementAge():.2f}")
+
+        
         actual_month = data.get_actual_month()
         end_months = data.get_end_simulation_month()
 
@@ -94,6 +125,9 @@ class Simulation :
         end_time = time.time()*1000.0   
         logging.info(f"Simulation finished after {end_time - start_time} ms")
         logging.getLogger(Config.LOGGER_SUMMARY).info(f"Simulation finished at age of {data.get_actual_age()} with wealth of {data.get_wealth() : .0f}")
+        
+        Output.add_result(Output.TIME_TO_GO, f"{data.get_actual_age():.2f}")
+        Output.add_result(Output.REMAINING_WEALTH,f"{max(0.0,data.get_wealth()):.0f} CHF")
     
     
     def __one_month(self, month : int, data : Data, config : Config) :
@@ -117,7 +151,7 @@ class Simulation :
         total_income = private_pension + legal_pension + income
         wealth_trend = total_income - total_deductions + data.get_wealth()*monthly_performance
             
-        wealth = data.get_wealth() + data.get_savings() + data.get_extra() + total_income - total_deductions
+        wealth = data.get_wealth() + data.get_savings() + total_income - total_deductions
         wealth *=  1.0 +monthly_performance
         pk_capital = data.get_pk_capital() + data.get_pk_contribution()
   

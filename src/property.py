@@ -5,6 +5,8 @@ import uuid
 from typing import List
 from config import Config
 from data import Data
+from output import Output
+
 
 
 
@@ -262,16 +264,22 @@ class PropertyManager :
         return sorted(input, key=lambda obj: (obj.get_buy_age(),  obj.get_worth() if low2high else 1/obj.get_worth() ))   # sort by time to sell (Buy_age and then for price. Less worth first)
     
     @staticmethod
-    def sell(property : Property, data: Data) -> bool:
+    def sell(property : Property, data: Data, config: Config) -> bool:
+        from tax import TaxHandler
+        
         if property.get_status() != Property.OWNED :
             logging.debug(f"Cannot sell property {property.get_name()} as it is no longer available.")
             return False
         property.set_status(Property.SOLD)
         PropertyManager.remove_expenses(property)
         mortage = 0.0 if property.get_mortage() is None else property.get_mortage().get_value()
-        data.set_wealth(data.get_wealth() + property.get_worth() - mortage) 
-        logging.info(f"Property {property.get_name()} has been sold at age {data.get_actual_age():.2f} for a price of {property.get_worth():.0f} CHF and a profit of {property.get_worth() - property.get_price():.0f} CHF.") 
+        profit = property.get_worth() - property.get_price()
+        tax  = TaxHandler.sales_tax(config, property) 
+        
+        data.set_wealth(data.get_wealth() + property.get_worth() - mortage - tax) 
+        logging.info(f"Property {property.get_name()} has been sold at age {data.get_actual_age():.2f} for a price of {property.get_worth():.0f} CHF and a profit of {profit - tax:.0f} CHF.") 
         logging.getLogger(Config.LOGGER_SUMMARY).info(f"Sold {property.get_name()} at age of {data.get_actual_age():.2f}.  Wealth after that is {data.get_wealth():.0f} CHF with income of {data.get_actual_income():.0f} ")
+        Output.add_result(Output.SELL_PROPERTY, f"Age: {data.get_actual_age():.2f}", f"{Output.SELL_PROPERTY[1]} {property.get_name()}")
         return True
         
         
@@ -303,6 +311,7 @@ class PropertyManager :
         
         logging.info(f"Property {property.get_name()} has been bought at age {data.get_actual_age():.2f} for a price of {property.get_price():.0f} CHF and a mortage of {property.get_mortage().get_value():.0f} CHF.") 
         logging.getLogger(Config.LOGGER_SUMMARY).info(f"Bought {property.get_name()} at age of {data.get_actual_age():.2f}.  Wealth after that is {data.get_wealth():.0f}) CHF with income of {data.get_actual_income():.0f} ")
+        Output.add_result(Output.BUY_PROPERTY, f"Age: {data.get_actual_age():.2f}", f"{Output.BUY_PROPERTY[1]} {property.get_name()}")
   
         
         return True

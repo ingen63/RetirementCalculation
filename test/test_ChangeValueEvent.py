@@ -19,8 +19,8 @@ def data():
 def test_change_value_event_before_method(config, data):
     # Arrange
     test_value = 0.01
-    config.setValue(Config.CALCULATION_SINGLE_PERFORMANCE, test_value)
-    event = ChangeValueEvent(Config.DEFAULT_STARTMONTH,  Config.CALCULATION_SINGLE_PERFORMANCE)
+    config.setValue(Config.GENERAL_PERFORMANCE, test_value)
+    event = ChangeValueEvent(Config.DEFAULT_STARTMONTH,  Config.GENERAL_PERFORMANCE)
 
     assert data.get_performance() == 0.0
     # Act
@@ -32,9 +32,9 @@ def test_change_value_event_before_method(config, data):
 def test_change_value_event_data_before_start(config, data):
     # Arrange
     test_value = {"40" : 0.04, "60" : 0.06}
-    config.setValue( Config.CALCULATION_SINGLE_PERFORMANCE, test_value)
-    event40 = ChangeValueEvent(Config.DEFAULT_STARTMONTH,  Config.CALCULATION_SINGLE_PERFORMANCE)
-    event61 = ChangeValueEvent(config.age2months(61),  Config.CALCULATION_SINGLE_PERFORMANCE)
+    config.setValue( Config.GENERAL_PERFORMANCE, test_value)
+    event40 = ChangeValueEvent(Config.DEFAULT_STARTMONTH,  Config.GENERAL_PERFORMANCE)
+    event61 = ChangeValueEvent(config.age2months(61),  Config.GENERAL_PERFORMANCE)
      
 
     # Act
