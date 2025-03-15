@@ -244,7 +244,7 @@ class Config:
         if value is None or not isinstance(value, dict):
             return self.best_guess_for_number(value)
 
-        keys = sorted(value.keys())
+        keys = sorted(value.keys(), key=lambda x: float(x))
         previous_x = float(keys[0])
         previous_y = self.best_guess_for_number(value[keys[0]])
         for key in keys:

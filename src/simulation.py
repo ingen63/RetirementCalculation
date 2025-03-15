@@ -54,13 +54,14 @@ class Simulation :
             for age in values.keys():
                 lumpsum_ratio += float(values[age])
             factor = 1 - lumpsum_ratio
+            factor = 1 if factor == 0 else factor
             for age in dict(sorted(values.items())).keys():
                 change_event_month = config.getStartMonth() if config.best_guess_for_number(age) < data.get_start_age() else config.age2months(age)
                 value = values[age]
                 EventHandler.add_event(LumpsumEvent(change_event_month,value/factor))
-                factor = factor - value
+                factor =  factor - value
         else :
-            EventHandler.add_event(LumpsumEvent(config.age2months(config.getEarlyRetirementAge()),float(values)))
+            EventHandler.add_event(LumpsumEvent(config.age2months(config.getEarlyRetirementAge()),1.0))
             lumpsum_ratio = float(values)
             
         data.set_lumpsum_ratio(lumpsum_ratio)

@@ -13,15 +13,15 @@
         "Capital": { "0" : 0.0, "100000" : 0.0001, "200000" : 0.0003, "500000" : 0.000602, "1000000" : 0.000942, "2000000" : 0.001383},
         "PensionCapital": { "0" : 0.02, "250000" : 0.02, "500000" : 0.02332, "750000" : 0.03312, "1000000" : 0.04082, "2000000" : 0.062070, "4000000" : 0.08373},
         "Sales" : { "4000" : 0.1, "6000" : 0.15, "8000" : 0.2, "12000" : 0.25, "20000" : 0.3, "50000" : 0.35, "100000": 0.4, "10000000" : 0.4}, 
-        "SalesTaxReduction": 0.44
+        "SalesTaxReduction": 0.5
     },
 
     "Pension": {
-        "EarlyRetirement" : 63.25,
+        "EarlyRetirement" : 63.1666,
         "LegalRetirement" : 65,
         "Private": {
             "Capital": 1494352.0,
-            "LumpsumRatio": 0.65,
+            "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.5, "65" : 0.5},
             "ConversionRate": 0.0408, 
             "Contribution":  {"50": 4554.0 },
             "Interest": {"56.75": 0.035, "57.75" : 0.03, "58.75" : 0.095, "59.75" : 0.07, "60.75" : 0.09,  "61.75" : 0.09,  "62.75" : 0.025, "63.75" : 0.01}
@@ -91,44 +91,36 @@
             {
                 "Name": "Early with Age 63.25",
                 "Parameters" : {
-                    "Pension": {
-                        "EarlyRetirement" : 63.25,
-                        "Private": {
-                            "LumpsumRatio": 0.5
-                        }
+                    "General" : {
+                        "Inflation" : 0.01,
+                        "Performance" : 0.04
                     }
                 }
             },
             {
                 "Name": "Early with Age 63.25",
                 "Parameters": {
-                    "Pension": {
-                        "EarlyRetirement" : 63.25,
-                        "Private": {
-                            "LumpsumRatio": 0.65
-                        }
+                    "General" : {
+                        "Inflation" : 0.015,
+                        "Performance" : 0.03
                     }
                 }
             },
             {
                 "Name": "Early with Age 63.25",
                 "Parameters": {
-                    "Pension": {
-                        "EarlyRetirement" : 63.25,
-                        "Private": {
-                            "LumpsumRatio": 0.75
-                        }
+                    "General" : {
+                        "Inflation" : 0.02,
+                        "Performance" : 0.02
                     }
                 }
             },
             {
                 "Name": "Early with Age 63.25",
                 "Parameters": {
-                    "Pension": {
-                        "EarlyRetirement" : 63.25,
-                        "Private": {
-                            "LumpsumRatio": 1.0
-                        }
+                    "General" : {
+                        "Inflation" : 0.02,
+                        "Performance" : 0.0
                     }
                 }
             }
