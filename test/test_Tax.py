@@ -81,4 +81,9 @@ def test_sales_tax(config):
     property.set_worth(1590669.0)
     assert TaxHandler.sales_tax(config, property) == round(183493.86,2)
     
+    config.setValue(Config.TAXES_SALES,None)
+    assert TaxHandler.sales_tax(config, property) == 0.0
+    
+    
+    
     

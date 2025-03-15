@@ -27,9 +27,14 @@ class TaxHandler:
         
     
     def sales_tax(config : Config, property : Property) -> float :
+        
+        if property is None or config.getValue(Config.TAXES_SALES) is None:
+            return 0.0
+        
         profit = property.get_worth() - property.get_price()
         
         tax_rates = config.getValue(Config.TAXES_SALES)
+        
         keys = list(tax_rates.keys())
         keys.sort(key=lambda obj: (config.best_guess_for_number(obj)))
         tax = 0.0

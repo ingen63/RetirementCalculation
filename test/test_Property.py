@@ -26,7 +26,8 @@ def config():
                     "Worth":  2000.0, 
                     "RentalIncome": 10.0,
                     "FixCosts": 750.0,
-                    "Sell": 72.0,
+                    "SellAge": 72.0,
+                    "BuyAge": 41,
                     "Mortage": {       
                         "Value": 750.0,
                         "Interest": 0.01,
@@ -68,8 +69,8 @@ def test_property(config: Config):
     assert property.get_status() == Property.PLANNED
     assert round(property.get_price(),2) == 0.0
     assert round(property.get_worth(),2) == 0.0
-    assert property.get_buy_age() is None
-    assert property.get_sell_age() is None
+    assert property.get_buy_age() == 120
+    assert property.get_sell_age() == 120
     assert property.get_mortage().get_value() == 0.0
     assert property.get_mortage().get_interest() == Mortage.DEFAULT_AFFORDABILITY_MORTAGEINTEREST
     assert property.get_mortage().get_term() == Mortage.DEFAULT_MORTAGE_TERM

@@ -2,7 +2,7 @@
 import logging
 import time
 from data import Data
-from event import BuyPropertyEvent, ChangeValueEvent, EarlyRetirmentEvent, EndSimulationEvent, EventHandler, LegalRetirmentEvent, LumpsumEvent, MoneyFlowExtraEvent, RenewMortageEvent, RentPropertyEvent, SellPropertyEvent, StartSimulationEvent
+from event import BuyPropertyEvent, ChangeValueEvent, EarlyRetirmentEvent, EndSimulationEvent, EventHandler, LegalRetirmentEvent, MoneyFlowExtraEvent, RenewMortageEvent, RentPropertyEvent, SellPropertyEvent, StartSimulationEvent
 from config import Config
 from output import Output
 from property import Property, PropertyManager
@@ -20,14 +20,6 @@ class Simulation :
         data = Data(config.getStartAge(), config.getEndAge(), config.getStartMonth())
 
         EventHandler.add_event(StartSimulationEvent(config.getStartMonth()))
-        
-                 # Early retirement
-        early_retirment_month = config.age2months(config.getEarlyRetirementAge())
-        EventHandler.add_event(EarlyRetirmentEvent(early_retirment_month))
-
-        # Legal retirement
-        legal_retirment_month = config.age2months(config.getLegalRetirementAge())
-        EventHandler.add_event(LegalRetirmentEvent(legal_retirment_month))   
 
         # create all change events
         keys = data.get_change_value_event()
@@ -47,26 +39,14 @@ class Simulation :
                 EventHandler.add_event(MoneyFlowExtraEvent(change_event_month,float(values[age])))
         else :
             EventHandler.add_event(MoneyFlowExtraEvent(config.getStartMonth(),float(values)))
-            
-        values = config.getValue(Config.PENSION_PRIVATE_LUMPSUMRATIO)
-        lumpsum_ratio = 0.0
-        if (isinstance(values,dict)) :
-            for age in values.keys():
-                lumpsum_ratio += float(values[age])
-            factor = 1 - lumpsum_ratio
-            factor = 1 if factor == 0 else factor
-            for age in dict(sorted(values.items())).keys():
-                change_event_month = config.getStartMonth() if config.best_guess_for_number(age) < data.get_start_age() else config.age2months(age)
-                value = values[age]
-                EventHandler.add_event(LumpsumEvent(change_event_month,value/factor))
-                factor =  factor - value
-        else :
-            EventHandler.add_event(LumpsumEvent(config.age2months(config.getEarlyRetirementAge()),1.0))
-            lumpsum_ratio = float(values)
-            
-        data.set_lumpsum_ratio(lumpsum_ratio)
                
-    
+                     # Early retirement
+        early_retirment_month = config.age2months(config.getEarlyRetirementAge())
+        EventHandler.add_event(EarlyRetirmentEvent(early_retirment_month))
+
+        # Legal retirement
+        legal_retirment_month = config.age2months(config.getLegalRetirementAge())
+        EventHandler.add_event(LegalRetirmentEvent(legal_retirment_month))   
                
         # initialize properties
         properties = config.getValue(Config.REALESTATE_PROPERTIES,[])
@@ -88,6 +68,8 @@ class Simulation :
                 EventHandler.add_event(RentPropertyEvent(config.age2months(property.get_buy_age()), property))
 
         EventHandler.add_event(EndSimulationEvent(config.getEndMonth()))
+        
+        EventHandler.init(config, data)
 
         return data
 
@@ -106,6 +88,8 @@ class Simulation :
         end_months = data.get_end_simulation_month()
 
         start_time = time.time()*1000.0
+        
+
         for month in range(actual_month, end_months+1):
             data.set_actual_month(month)
             EventHandler.before(month, config, data)

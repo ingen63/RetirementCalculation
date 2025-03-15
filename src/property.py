@@ -116,6 +116,8 @@ class Property :
         self.set_rental_income(property_config.getValue(Property.RENTALINCOME,0.0))
         self.set_fix_costs(property_config.getValue(Property.FIXCOSTS, None))
         if (self.get_status() == Property.OWNED or self.get_status() == Property.PLANNED) :
+            if property_config.getValue(Property.MORTAGE_VALUE) is None :
+                property_config.setValue(Property.MORTAGE_VALUE, self.get_price()*(1.0-Property.OWN_FUNDS))
             self.set_mortage(Mortage(property_config))
         else :
             self.__mortage = None
@@ -227,7 +229,7 @@ class PropertyManager :
         
     @staticmethod
     def get_property_for_sale(count : int = 0 ) -> Property :
-        properties =  PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties,Property.OWNED),True)
+        properties =  PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties,Property.OWNED),False)
         return None if len(properties) < count+1 else properties[count] 
    
     @staticmethod 
@@ -343,25 +345,19 @@ class PropertyManager :
         new_mortage = copy.deepcopy(property.get_mortage())
         
         max_mortage = PropertyManager.max_mortage(property, data, config)
-        max_mortage = min(new_mortage.get_value(), max_mortage)
+        max_mortage = min(new_mortage.get_value(), max_mortage)  # mortage is never greater than 80%of the property price or the previous mortage
         if property.get_status() == Property.OWNED :
-            renew = True
+            own_funds = 0.0
         else:
-            renew = False
-            
-        own_funds = 0.0 if renew  else property.get_worth() * Property.OWN_FUNDS
+            own_funds = property.get_worth() * Property.OWN_FUNDS
         
-        if (data.get_wealth() < own_funds ) :  # not enough wealth to provide enough own funds
+        old_mortage = property.get_mortage()
+        new_mortage.set_value(max_mortage)
+        amortization = old_mortage.get_value() - new_mortage.get_value()
+        if data.get_wealth() < own_funds + amortization  :
             return None
-        
-        if (renew) :
-            old_mortage = property.get_mortage()
-            new_mortage.set_value(min(old_mortage.get_value(), max_mortage))
-            amortization = old_mortage.get_value() - new_mortage.get_value()
-            if (data.get_wealth() - amortization) < 0.0 :
-                return None
         else :
-            new_mortage.set_value(min(property.get_worth()*(1.0-Property.OWN_FUNDS), max_mortage))
+            new_mortage.set_value(max_mortage)
             
         new_mortage.set_start_age(data.get_actual_age())
         
@@ -407,20 +403,31 @@ class PropertyManager :
         
         wealth  = data.get_wealth()
         income = (data.get_legal_pension() + data.get_private_pension())*Config.MONTHS
+        price = property.get_price()
         
-        new_wealth = wealth
+        if property.get_status() == Property.OWNED :
+            renew = True
+        else : 
+            renew = False
+
+        new_wealth = wealth    
         new_max_mortage = 0.0
-        max_legal_mortage =   property.get_worth()*(1.0-Property.OWN_FUNDS)
-        
+
+        max_legal_mortage = property.get_worth()*(1.0-Property.OWN_FUNDS)
+        requested_mortage = min(mortage, max_legal_mortage)  # the requested mortage must not exceed the legal limit of 80% of the property price
         i = 0
         while (True) :
             max_mortage = (sustanability * (income + new_wealth * capital_contribution) - fix_costs) / interest   
-           
+            max_mortage = min(max_mortage, requested_mortage)
             if abs(new_max_mortage - max_mortage) < 0.001 :
-                return max_mortage if (max_mortage < max_legal_mortage) else max_legal_mortage  # if we've reached or exceeded the legal mortgage limit, return that instead of the calculated max mortage
+                return max_mortage
             
-            amortization = max(0,mortage - max_mortage)  # in CH you cant get more wealth by increasing ypur mortage
-            new_wealth = max(0, wealth - amortization)  # make sure not to go into negative wealth
+            if (renew) : 
+                amortization =  mortage - max_mortage # in CH you cant get more wealth by increasing ypur mortage
+                new_wealth = max(0, wealth - amortization)  # make sure not to go into negative wealth
+            else :
+                new_wealth = max(0, wealth - (price - max_mortage))  # make sure not to go into negative wealth
+                
             new_max_mortage = max_mortage  # update the new max_mortage before the next iteration
             i += 1
             if i > 1000 :
@@ -431,7 +438,7 @@ class PropertyManager :
 
     @staticmethod
     def get_properties(type : str, low2high : bool = None) -> List[Property] :
-        low2high = False if low2high is None else low2high
+        low2high = True if low2high is None else low2high
         return PropertyManager.__sort(PropertyManager.__filter(PropertyManager.__properties, type),low2high)
     
     

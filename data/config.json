@@ -21,7 +21,7 @@
         "LegalRetirement" : 65,
         "Private": {
             "Capital": 1494352.0,
-            "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.5, "65" : 0.5},
+            "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.5},
             "ConversionRate": 0.0408, 
             "Contribution":  {"50": 4554.0 },
             "Interest": {"56.75": 0.035, "57.75" : 0.03, "58.75" : 0.095, "59.75" : 0.07, "60.75" : 0.09,  "61.75" : 0.09,  "62.75" : 0.025, "63.75" : 0.01}
@@ -32,7 +32,7 @@
     "MoneyFlows": {
         "Savings":  {"50": 1000.0, "{Pension.EarlyRetirement}": 0.0},
         "Income": {"50.00": 9800.00, "{Pension.EarlyRetirement}" : 0.0},
-        "Spendings": {"62.5" : 9230.0, "65.0" : 7570.0, "70.00" : 7000.0, "80.00" : 6500.0},
+        "Spendings": {"62" : 9230.0, "65.0" : 7570.0, "70.00" : 7500.0},
         "Extra": {"62.3" : -75000.0, "{Pension.EarlyRetirement}": 88600.0}
     },
 
@@ -68,8 +68,7 @@
                 "Status": "Planned",
                 "Price":  750000.0,
                 "BuyAge": 102.0, 
-                "Mortage": {
-                    "Value": 0.0,      
+                "Mortage": {     
                     "Interest": 0.011,
                     "Term": 10.0,
                     "Amortization": 550.0
@@ -83,7 +82,7 @@
         ]
     },
     "Calculation": {
-        "Method": "Scenarios",
+        "Method": "Single",
         "Single": {
            
         },

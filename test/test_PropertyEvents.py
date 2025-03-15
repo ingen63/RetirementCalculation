@@ -25,24 +25,25 @@ def test_SellPropertyEvent(config : Config):
     
     data = Data(config.getStartAge(), config.getEndAge())
     
-    properties = PropertyManager.get_owned_properties(True)
+    properties = PropertyManager.get_properties(Property.OWNED)
    
     for property in properties:
-        EventHandler.add_event(SellPropertyEvent(property.get_sell_age(), property))
+        EventHandler.add_event(SellPropertyEvent(config.age2months(property.get_sell_age()), property))
                               
-    wealth = 0 
-    i=1 
-    for month in range(data.get_start_simulation_month()-10, data.get_start_simulation_month()+5*12) :
-        events = EventHandler.get_events(month)
-        for event in events :
-            if isinstance(event, SellPropertyEvent) :
-                wealth += i*150000
-                i += 1
-            event.before_method(config, data)
-            event.after_method(config, data)
-            assert data.get_wealth() == wealth
 
+    EventHandler.before(config.age2months(50), config, data) 
+    assert data.get_wealth() == 150000.0
+    
+    EventHandler.before(config.age2months(50), config, data)
+    assert data.get_wealth() == 150000.0
+    
+    EventHandler.before(config.age2months(52), config, data)
+    assert data.get_wealth() == 150000.0 + 300000.0 + 450000.0
+    
+    EventHandler.before(config.age2months(54), config, data)
     assert data.get_wealth() == 150000.0 + 300000.0 + 450000.0 + 600000.0
+
+
    
    
     

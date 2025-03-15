@@ -22,12 +22,12 @@ def test_sort(config : Config) :
     PropertyManager.add_property(property1)
     PropertyManager.add_property(property2)
     
-    sorted = PropertyManager.get_planned_properties()
+    sorted = PropertyManager.get_properties(Property.PLANNED)
     assert sorted[0].get_buy_age() == 50
     assert sorted[1].get_buy_age() == 52
     assert sorted[2].get_buy_age() == 54
     
-    sorted = PropertyManager.get_planned_properties(False)
+    sorted = PropertyManager.get_properties(Property.PLANNED, False)
     assert sorted[0].get_buy_age() == 50
     assert sorted[1].get_buy_age() == 52
     assert sorted[2].get_buy_age() == 54
@@ -35,12 +35,12 @@ def test_sort(config : Config) :
     property1.set_buy_age(50)
     property2.set_buy_age(50)
     
-    sorted = PropertyManager.get_planned_properties()
+    sorted = PropertyManager.get_properties(Property.PLANNED)
     assert sorted[0].get_price() == 80
     assert sorted[1].get_price() == 90
     assert sorted[2].get_price() == 100
     
-    sorted = PropertyManager.get_planned_properties(False)
+    sorted = PropertyManager.get_properties(Property.PLANNED, False)
     assert sorted[0].get_price() == 100
     assert sorted[1].get_price() == 90
     assert sorted[2].get_price() == 80
@@ -57,10 +57,10 @@ def test_PropertyManager(config : Config):
 
     # Assert
     # Assert
-    assert len(PropertyManager.get_owned_properties()) == 1
-    assert len(PropertyManager.get_planned_properties()) == 0
-    assert len(PropertyManager.get_sold_properties()) == 0
-    assert PropertyManager.get_owned_properties()[0] == property0
+    assert len(PropertyManager.get_properties(Property.OWNED)) == 1
+    assert len(PropertyManager.get_properties(Property.PLANNED)) == 0
+    assert len(PropertyManager.get_properties(Property.SOLD)) == 0
+    assert PropertyManager.get_properties(Property.OWNED)[0] == property0
     
     property1 = Property(Config({"Name": "Owned House", "Worth": 200000, "Status" : "Owned"}))
 
@@ -68,11 +68,11 @@ def test_PropertyManager(config : Config):
     PropertyManager.add_property(property1)
 
     # Assert
-    assert len(PropertyManager.get_owned_properties()) == 2
-    assert len(PropertyManager.get_planned_properties()) == 0
-    assert len(PropertyManager.get_sold_properties()) == 0
-    assert PropertyManager.get_owned_properties()[0] == property1
-    assert PropertyManager.get_owned_properties()[1] == property0
+    assert len(PropertyManager.get_properties(Property.OWNED)) == 2
+    assert len(PropertyManager.get_properties(Property.PLANNED)) == 0
+    assert len(PropertyManager.get_properties(Property.SOLD)) == 0
+    assert PropertyManager.get_properties(Property.OWNED)[0] == property0
+    assert PropertyManager.get_properties(Property.OWNED)[1] == property1
     
     
     property2 = Property(Config({"Name": "Planned House", "Worth": 300000, "BuyAge": start_age, "Status" : "Planned"}))
@@ -81,33 +81,34 @@ def test_PropertyManager(config : Config):
     PropertyManager.add_property(property2)
 
     # Assert
-    assert len(PropertyManager.get_owned_properties()) == 2
-    assert len(PropertyManager.get_planned_properties()) == 1
-    assert len(PropertyManager.get_sold_properties()) == 0
-    assert PropertyManager.get_owned_properties()[0] == property1
-    assert PropertyManager.get_planned_properties()[0] == property2
+    assert len(PropertyManager.get_properties(Property.OWNED)) == 2
+    assert len(PropertyManager.get_properties(Property.PLANNED)) == 1
+    assert len(PropertyManager.get_properties(Property.SOLD)) == 0
+    assert PropertyManager.get_properties(Property.OWNED)[0] == property0
+    assert PropertyManager.get_properties(Property.PLANNED)[0] == property2
+
     
     
     property3 = Property(Config({"Name": "Sold House", "Worth": 200000, "Status" : "Sold"}))
 
     # Act
     PropertyManager.add_property(property3)
+    
+    assert len(PropertyManager.get_properties(Property.OWNED)) == 2
+    assert len(PropertyManager.get_properties(Property.PLANNED)) == 1
+    assert len(PropertyManager.get_properties(Property.SOLD)) == 1
+    assert PropertyManager.get_properties(Property.OWNED)[0] == property0
+    assert PropertyManager.get_properties(Property.PLANNED)[0] == property2
+    assert PropertyManager.get_properties(Property.SOLD)[0] == property3
 
-    # Assert
-    assert len(PropertyManager.get_owned_properties()) == 2
-    assert len(PropertyManager.get_planned_properties()) == 1
-    assert len(PropertyManager.get_sold_properties()) == 1
-    assert PropertyManager.get_owned_properties()[0] == property1
-    assert PropertyManager.get_planned_properties()[0] == property2
-    assert PropertyManager.get_sold_properties()[0] == property3
     
     
-    assert PropertyManager.get_property_for_sale() == property0
+    assert PropertyManager.get_property_for_sale() == property1
     assert PropertyManager.get_property_to_buy() == property2
     
     PropertyManager.remove_property(property0)
     
-    assert len(PropertyManager.get_owned_properties()) == 1
+    assert len(PropertyManager.get_properties(Property.OWNED)) == 1
     
 def test_add_property_from_json() :  
     
@@ -159,45 +160,47 @@ def test_add_property_from_json() :
         property = Property(Config(property_config))
         PropertyManager.add_property(property)
        
-    assert PropertyManager.get_owned_properties()[0].get_name() == "Haus"    
-    assert PropertyManager.get_planned_properties()[0].get_name() == "Wohnung"   
-    assert PropertyManager.get_rented_properties()[0].get_name() == "Mietwohnung"  
+    assert PropertyManager.get_properties(Property.OWNED)[0].get_name() == "Haus"    
+    assert PropertyManager.get_properties(Property.PLANNED)[0].get_name() == "Wohnung"   
+    assert PropertyManager.get_properties(Property.RENTED)[0].get_name() == "Mietwohnung"  
     
     
 def test_sell_property(config):
      
      
-    property = Property(Config({"Name": "Owned House", "Worth": 100000, "Status" : "Owned"}))
-    
+    property1 = Property(Config({"Name": "Owned House", "Worth": 100000, "Status" : "Owned"})) 
     property2 = Property(Config({"Name": "Owned House2", "Price": 200000, "Status" : "Owned"}))
     property3 = Property(Config({"Name": "Owned House3", "Price": 300000, "Status" : "Owned"}))
     
     data = Data(config.getStartAge(), config.getEndAge())
 
     # Act
-    PropertyManager.add_property(property)
+    PropertyManager.add_property(property1)
     PropertyManager.add_property(property2)
     PropertyManager.add_property(property3)
+    assert PropertyManager.get_properties_expenses() == 0.01*(property1.get_price() + property2.get_price() + property3.get_price())/Config.MONTHS
     
-    assert PropertyManager.sell(property, data)  is True
+    assert PropertyManager.get_property_for_sale() == property3
     
-    assert data.get_wealth() == property.get_price()
+    assert PropertyManager.sell(property3, data, config)  is True
+    assert data.get_wealth() == property3.get_price()
+    assert PropertyManager.get_properties_expenses() == 0.01*(property1.get_price() + property2.get_price())/Config.MONTHS
+    assert len(PropertyManager.get_properties(Property.OWNED)) == 2
+    assert len(PropertyManager.get_properties(Property.SOLD)) == 1
     
-    assert PropertyManager.sell(property, data)  is False
+    assert PropertyManager.sell(property3, data, config)  is False
+    assert data.get_wealth() == property3.get_price()
+    assert PropertyManager.get_properties_expenses() == 0.01*(property1.get_price() + property2.get_price())/Config.MONTHS
+    assert len(PropertyManager.get_properties(Property.OWNED)) == 2
+    assert len(PropertyManager.get_properties(Property.SOLD)) == 1
     
-    assert data.get_wealth() == property.get_price()
+    assert PropertyManager.get_property_for_sale() == property2
     
-    data.set_wealth(10)
-    data.set_spending(1)
-    data.set_threshold_months(24)
-    
-    assert PropertyManager.sell(property, data)  is True
-    
-    assert data.get_wealth() == property2.get_price() + 10
-    
-    
-    
-    
+    assert PropertyManager.sell(property2, data, config)  is True
+    assert data.get_wealth() == property3.get_price() +  property2.get_price()
+    assert PropertyManager.get_properties_expenses() == 0.01*property1.get_price()/Config.MONTHS
+    assert len(PropertyManager.get_properties(Property.OWNED)) == 1
+    assert len(PropertyManager.get_properties(Property.SOLD)) == 2
     
     
 def test_new_mortage(config : Config):  
@@ -207,7 +210,7 @@ def test_new_mortage(config : Config):
     data.set_wealth(0.0)
     data.set_legal_pension(10)
     data.set_private_pension(10)
-    property = Property(config, {"Name": "Owned House", "Price": 1000, "Status" : "Owned", "SellAge": (config.getEndAge()+1), "Mortage.Interest" : 0.015 })
+    property = Property(Config({"Name": "Owned House", "Price": 1000, "Status" : "Planned" }))
 
     # Act
     mortage = PropertyManager.mortage(property, data, config)
@@ -223,9 +226,9 @@ def test_new_mortage(config : Config):
     # Assert
     assert mortage is not None
     assert round(mortage.get_value(),2) == 800.0
-    assert mortage.get_interest() == property.get_planned_mortage_interest()
-    assert mortage.get_term() == property.get_planned_mortage_term()
-    assert property.get_fix_costs() == property.get_price()*0.01
+    assert mortage.get_interest() == 0.05
+    assert mortage.get_term() == 10.0
+    assert property.get_fix_costs() == property.get_price()*0.01/12
     
     property.set_worth(3000.0)
     data.set_wealth(2000.0)
@@ -233,35 +236,27 @@ def test_new_mortage(config : Config):
     
     # Assert
     assert mortage is not None
-    assert round(mortage.get_value(),2) == 1800
+    assert round(mortage.get_value(),2) == 800
 
-    property.set_worth(4000.0)
+    property = Property(Config({"Name": "Owned House", "Price": 4000, "Status" : "Planned" }))
     data.set_wealth(2000.0)
+    assert PropertyManager.mortage(property, data, config) is None
+        
+    data.set_wealth(3200.0)
     mortage = PropertyManager.mortage(property, data, config)
-    
-    # Assert
     assert mortage is not None
-    assert round(mortage.get_value(),2) == 1800
+    assert round(mortage.get_value(),2) == 800
     
-    
-    property.set_mortage(mortage)
+    data.set_wealth(4000.0)
     mortage = PropertyManager.mortage(property, data, config)
-    
-    # Assert
     assert mortage is not None
-    assert round(mortage.get_value(),2) == 1800
+    assert round(mortage.get_value(),2) == 1000
     
-    data.set_wealth(0.0)
+    
+    data.set_wealth(16000.0)
     mortage = PropertyManager.mortage(property, data, config)
-    
-    assert mortage is None
-    
-    
-    data.set_wealth(400.0)
-    mortage = PropertyManager.mortage(property, data, config)
-    
-    assert round(mortage.get_value(),2) == 1400
-    
+    assert mortage is not None
+    assert round(mortage.get_value(),2) == 3200
     
     
     

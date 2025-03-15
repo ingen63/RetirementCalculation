@@ -17,6 +17,9 @@ class Event(ABC):
     def __init__(self, month : int):
         self.__month = month
         
+    def init_method(self, config: Config, data : Data) :
+         return 
+       
     
     def before_method(self, config: Config, data : Data) -> bool:
         return True
@@ -138,6 +141,7 @@ class LumpsumEvent(Event):
         lumpsum -= lumpsum_tax
         data.set_lumpsum(lumpsum)
         data.set_wealth(data.get_wealth()+data.get_lumpsum())
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Lumpsum Payment of {lumpsum : .0f} CHF at age {data.get_actual_age() : .2f} and wealth of {data.get_wealth() : .0f} CHF")
         return True
 
     def after_method(self, config, data):
@@ -145,9 +149,32 @@ class LumpsumEvent(Event):
         return True
     
 class EarlyRetirmentEvent(Event) :
+        
     
     def get_name(self) -> str :
         return "EarlyRetirementEvent"
+    
+    def init_method(self, config, data):
+        
+        early_retirment_age = config.getEarlyRetirementAge()
+        values = config.getValue(Config.PENSION_PRIVATE_LUMPSUMRATIO)
+        lumpsum_ratio = 0.0
+        if (isinstance(values,dict)) :
+                       
+            for age in values.keys():
+                lumpsum_ratio += float(values[age])
+             
+            factor = 1 if lumpsum_ratio == 0 else lumpsum_ratio
+  
+            for age in dict(sorted(values.items())).keys():
+                change_event_month = early_retirment_age if config.best_guess_for_number(age) < early_retirment_age else config.age2months(age)
+                value = values[age]
+                EventHandler.add_event(LumpsumEvent(change_event_month,value/factor))
+                factor =  factor - value
+        else :
+            EventHandler.add_event(LumpsumEvent(config.age2months(early_retirment_age),1.0))
+            lumpsum_ratio = float(values)
+        data.set_lumpsum_ratio(lumpsum_ratio)
     
     def before_method(self, config: Config, data : Data)  -> bool :
         
@@ -159,7 +186,7 @@ class EarlyRetirmentEvent(Event) :
         self.__private_pension(config, data)
         
         logging.info (f"Early Retirement: Wealth: {data.get_wealth():.2f} Severance Pay: {data.get_extra():.2f} Lumpsum:  {data.get_lumpsum():.2f}  Private Pension: {data.get_private_pension():.2f} ")
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Early Retirment with age of {data.get_actual_age():.2f} and wealth of {data.get_wealth():.0f} CHF with income of {data.get_actual_income():.0f} ")
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Early Retirment with age of {data.get_actual_age():.2f} and wealth of {data.get_wealth():.0f} CHF with income of {data.get_private_pension():.0f} CHF")
         
         Output.add_result(Output.WEALTH_EARLY, f"{data.get_wealth():.0f} CHF")
         return True
@@ -192,7 +219,7 @@ class LegalRetirmentEvent(Event) :
         data.set_legal_pension(config.getActualValue(self.get_month(), Config.PENSION_LEGAL))
       
         logging.info(f"Legal Retirement: Wealth: {data.get_wealth():.2f} Legal Pension: {data.get_legal_pension():.2f}")
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Legal Retirment with age of {data.get_actual_age():.2f} and wealth of {data.get_wealth():.0f} CHF with income of {data.get_actual_income():.0f} ")
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Legal Retirment with age of {data.get_actual_age():.2f} and wealth of {data.get_wealth():.0f} CHF with income of {data.get_private_pension()+data.get_legal_pension():.0f} CHF")
         
         Output.add_result(Output.WEALTH_LEGAL, f"{data.get_wealth():.0f} CHF")
         Output.add_result(Output.PENSION, f"{data.get_legal_pension()+data.get_private_pension():.0f} CHF")
@@ -296,7 +323,7 @@ class RenewMortageEvent(Event):
                 next_mortage_renewal_month =  config.age2months(data.get_actual_age()+property.get_mortage().get_term()) 
                 EventHandler.add_event(RenewMortageEvent(next_mortage_renewal_month, property))
             else :  # renewal of mortage has failed, we have to sell the property
-                return_value = PropertyManager.sell(property, data, config)
+                EventHandler.add_event(SellPropertyEvent(self.get_month()+1, property))
         return return_value
     
 class RentPropertyEvent(Event) : 
@@ -343,11 +370,28 @@ class EventHandler() :
         EventHandler.__events = {}
        
     @staticmethod    
-    def get_all_events() -> dict:
-        return EventHandler.__events
+    def get_all_events() -> list :
+        all_events = []
+        ordered_keys = list(EventHandler.__events.keys())
+        ordered_keys.sort()
+        
+        for key in ordered_keys :
+            all_events += EventHandler.__events[key]
+            
+            
+        return all_events
+      
+      
+    @staticmethod
+    def init(config : Config, data : Data) :
+        events = EventHandler.get_all_events()
+        
+        for event in events:
+            event.init_method(config, data)
+        
         
     @staticmethod
-    def before(month: int,  config: Config, data : Data): 
+    def before(month: int,  config: Config, data : Data) : 
         events = EventHandler.get_events(month)
         
         for event in events:
