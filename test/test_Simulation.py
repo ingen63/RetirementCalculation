@@ -30,14 +30,7 @@ def config():
             "Savings":  {"50": 500.0, "60": 0},
             "Spendings": {"63": 6300, "65": 6500.00},
             "Extra": {"60": 63000.0}
-        },
-        "Calculation": {
-            "Method": "Single",
-            "Single": {
-                "Inflation": 0.01,
-                "Performance": 0.04              
-            }
-        } 
+        }
     }
     
     config = Config()
@@ -67,13 +60,13 @@ def test_init(config):
     assert len(events) == 0
     
     events = EventHandler.get_events(config.age2months(60))   
-    assert len(events) == 3
-    assert events[0].get_name() == "EarlyRetirementEvent"
+    assert len(events) == 4
+    assert events[2].get_name() == "EarlyRetirementEvent"
     
     events = EventHandler.get_events(config.age2months(65))   
     assert len(events) == 2
-    assert events[0].get_name() == "LegalRetirementEvent"
-    assert events[1].get_name() == f"ChangeValueEvent {Config.MONEYFLOWS_SPENDINGS}"
+    assert events[1].get_name() == "LegalRetirementEvent"
+    assert events[0].get_name() == f"ChangeValueEvent {Config.MONEYFLOWS_SPENDINGS}"
     
     events = EventHandler.get_events(data.get_end_simulation_month())  
     assert len(events) == 1

@@ -24,41 +24,37 @@ class Data:
     
     
     
-    __wealth = 0.0
-    __spending = 0.0
-    __income = 0.0
-    __private_pension = 0.0
-    __legal_pension = 0.0
-    
-    _threshold_months = 0.0
-    
-    __performance = 0.0
-    __inflation = 0.0
-    __income_taxrate = 0.0
-    __capital_taxrate = 0.0
-    
-    __pk_capital = 0.0
-    __pk_contribution = 0.0
-    __pk_interest = 0.0
-    
-    __savings = 0.0
-    
-    __lumpsum = 0.0
-    __lumpsum_ratio = 0.0
-    __extra = 0.0
-    
-    __yearly_income = 0.0
-    
-    __start_age = None
-    __end_age   = None
-    __actual_age = None
-    
-    __actual_month = None
-    __start_simulation_month = None
-    __end_simulation_month = None
+
     
     
     def __init__(self, start_age : float, end_age : float, start_month  : int = Config.DEFAULT_STARTMONTH ) :
+        self.__wealth = 0.0
+        self.__spending = 0.0
+        self.__income = 0.0
+        self.__private_pension = 0.0
+        self.__legal_pension = 0.0
+        
+        self._threshold_months = 0.0
+        
+        self.__performance = 0.0
+        self.__inflation = 0.0
+        self.__income_taxrate = 0.0
+        self.__capital_taxrate = 0.0
+        
+        self.__pk_capital = 0.0
+        self.__pk_contribution = 0.0
+        self.__pk_interest = 0.0
+        
+        self.__savings = 0.0
+        
+        self.__lumpsum = 0.0
+        self.__lumpsum_ratio = 0.0
+        self.__extra = 0.0
+        
+        self.__yearly_income = 0.0
+        
+        self.__inflation_history = []
+        
         self.__start_simulation_month = start_month
         self.__actual_month = start_month
         self.__end_simulation_month = start_month + round((end_age - start_age)*Config.MONTHS)
@@ -86,7 +82,7 @@ class Data:
         self.__wealth = value
     
     def get_spending(self) -> float:
-        return self.__spending
+        return self.__spending*self.get_inflation_correction()
     
     def set_spending(self, value :float) :
         value = 0.0 if (value is None) else value
@@ -243,3 +239,13 @@ class Data:
         income = self.get_private_pension() + self.get_legal_pension() + self.get_income()
         income += self.get_wealth() * self.get_performance()/Config.MONTHS
         return income
+    
+    def push_inflation(self) :
+        self.__inflation_history.append(self.get_inflation())
+        
+    def get_inflation_correction(self) :
+        correction = 1.0
+        for i in range(len(self.__inflation_history)):
+            correction *= (1.0+self.__inflation_history[i])
+            
+        return correction

@@ -110,7 +110,7 @@ def test_PropertyManager(config : Config):
     
     assert len(PropertyManager.get_properties(Property.OWNED)) == 1
     
-def test_add_property_from_json() :  
+def test_add_property_from_json(config : Config): 
     
     sample_data = {
             "RealEstate": {
@@ -165,10 +165,10 @@ def test_add_property_from_json() :
     assert PropertyManager.get_properties(Property.RENTED)[0].get_name() == "Mietwohnung"  
     
     
-def test_sell_property(config):
+def test_sell_property(config : Config):
      
      
-    property1 = Property(Config({"Name": "Owned House", "Worth": 100000, "Status" : "Owned"})) 
+    property1 = Property(Config({"Name": "Owned House", "Price": 100000, "Status" : "Owned"})) 
     property2 = Property(Config({"Name": "Owned House2", "Price": 200000, "Status" : "Owned"}))
     property3 = Property(Config({"Name": "Owned House3", "Price": 300000, "Status" : "Owned"}))
     
@@ -211,6 +211,7 @@ def test_new_mortage(config : Config):
     data.set_legal_pension(10)
     data.set_private_pension(10)
     property = Property(Config({"Name": "Owned House", "Price": 1000, "Status" : "Planned" }))
+    property.get_mortage().set_value(800.0)
 
     # Act
     mortage = PropertyManager.mortage(property, data, config)
@@ -239,6 +240,7 @@ def test_new_mortage(config : Config):
     assert round(mortage.get_value(),2) == 800
 
     property = Property(Config({"Name": "Owned House", "Price": 4000, "Status" : "Planned" }))
+    property.get_mortage().set_value(4000*0.8)
     data.set_wealth(2000.0)
     assert PropertyManager.mortage(property, data, config) is None
         

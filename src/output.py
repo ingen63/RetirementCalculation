@@ -32,6 +32,11 @@ class Output :
     scenario = 1
     columns = 2
     
+    @staticmethod
+    def reset() :
+        Output.output = {}
+        Output.scenario = 1
+        Output.columns = 2
     
     @staticmethod
     def next_scenario() :

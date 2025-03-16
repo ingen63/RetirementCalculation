@@ -12,8 +12,6 @@ from tax import TaxHandler
 class Event(ABC):
     
     
-    __month = 0
-    
     def __init__(self, month : int):
         self.__month = month
         
@@ -64,7 +62,10 @@ class StartSimulationEvent(Event):
       
 class EndSimulationEvent(Event):
     
-    __ms = time.time()*1000
+    
+    def __init__(self, month):
+        super().__init__(month)
+        self.__ms = time.time()*1000
     
     def get_name(self) -> str :
         return "EndSimulationEvent"
@@ -77,9 +78,7 @@ class EndSimulationEvent(Event):
 
 
 class ChangeValueEvent(Event):
-    
-    __key = None
-    
+     
     def get_name(self) -> str :
         return f"ChangeValueEvent {self.get_key()}"
     
@@ -96,8 +95,6 @@ class ChangeValueEvent(Event):
         return True
             
 class MoneyFlowExtraEvent(Event):
-    
-    __value = 0.0
     
     def get_name(self) -> str :
         return f"MoneyFlowExtraEvent: {self.get_value()}"
@@ -121,7 +118,6 @@ class MoneyFlowExtraEvent(Event):
     
 class LumpsumEvent(Event):
     
-    __ratio = 0.0
     
     def get_name(self) -> str :
         return f"LumpsumEvent: {self.get_ratio()}"
@@ -236,9 +232,7 @@ class LegalRetirmentEvent(Event) :
 
         
 class SellPropertyEvent(Event) : 
-    
-    _id   = None
-    _name = None
+
     
     def get_name(self) -> str :
         return "SellPropertyEvent"
@@ -271,8 +265,6 @@ class SellPropertyEvent(Event) :
         
 class BuyPropertyEvent(Event) : 
     
-    _id   = None
-    _name = None
     
     def get_name(self) -> str :
         return "SellPropertyEvent"
@@ -301,8 +293,6 @@ class BuyPropertyEvent(Event) :
         return False
       
 class RenewMortageEvent(Event):  
-    _id   = None
-    _name = None
     
     def get_name(self) -> str :
         return "RenewPropertyEvent"
@@ -328,8 +318,6 @@ class RenewMortageEvent(Event):
     
 class RentPropertyEvent(Event) : 
     
-    _id   = None
-    _name = None
     
     def get_name(self) -> str :
         return "SellRentPropertyEvent"

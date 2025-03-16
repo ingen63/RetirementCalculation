@@ -117,9 +117,12 @@ class Simulation :
     
     def __one_month(self, month : int, data : Data, config : Config) :
         
+        if month % Config.MONTHS == 0 :
+            data.push_inflation() # push inflation to history for later inflation corrections
+            
         # adjust spendigs accodording to inflation
         spending = data.get_spending()
-        spending *= (1.0 + data.get_inflation())**(1.0/Config.MONTHS)
+        spending *= (1.0 + data.get_inflation())**((month % Config.MONTHS)/Config.MONTHS)
         
         income = data.get_income()
                  
@@ -137,7 +140,7 @@ class Simulation :
         wealth_trend = total_income - total_deductions + data.get_wealth()*monthly_performance
             
         wealth = data.get_wealth() + data.get_savings() + total_income - total_deductions
-        wealth *=  1.0 +monthly_performance
+        wealth *=  (1.0 + monthly_performance)
         pk_capital = data.get_pk_capital() + data.get_pk_contribution()
   
         if month % Config.MONTHS == 0 : # Income Tax and Capital Tax are applied once a year at december
@@ -147,6 +150,7 @@ class Simulation :
             income_tax = TaxHandler.income_tax(config, yearly_income)
             wealth -=  (capital_tax + income_tax)
             yearly_income = 0.0 # reset income for the next year
+            
                            
 
        
@@ -155,7 +159,6 @@ class Simulation :
             
         data.set_wealth(wealth)
         data.set_pk_capital(pk_capital)
-        data.set_spending(spending)
         data.set_legal_pension(legal_pension)
         data.set_yearly_income(yearly_income)
         

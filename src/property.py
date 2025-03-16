@@ -21,13 +21,8 @@ class Mortage :
     DEFAULT_MORTAGE_TERM = 10
     
     
-    __value = 0.0
-    __interest = 0.0
-    __start_age = 0.0
-    __term = 0.0
-    __amortization = 0.0
-    
     def __init__(self, property_config : Config = None) :
+        
         if property_config is None : 
             property_config = Config()
         
@@ -107,17 +102,13 @@ class Property :
         self.__id = uuid.uuid4()
         self.__name =  property_config.getValue(Property.NAME,f"Name-{self.get_id()}")
         self.set_status(property_config.getValue(Property.STATUS, Property.PLANNED))
-        self.set_price(property_config.getValue(Property.PRICE,0.0001))
+        self.set_price(property_config.getValue(Property.PRICE,0.0))
         self.set_worth(property_config.getValue(Property.WORTH,self.get_price()))
-        if (self.get_price()) == 0.0001 : 
-            self.set_price(self.get_worth())
         self.set_buy_age(property_config.getValue(Property.BUYAGE,Config.MAX_AGE))
         self.set_sell_age(property_config.getValue(Property.SELLAGE, Config.MAX_AGE))
         self.set_rental_income(property_config.getValue(Property.RENTALINCOME,0.0))
-        self.set_fix_costs(property_config.getValue(Property.FIXCOSTS, None))
+        self.set_fix_costs(property_config.getValue(Property.FIXCOSTS, self.get_price()*Mortage.DEFAULT_AFFORDABILITY_FIXCOSTS/Config.MONTHS))
         if (self.get_status() == Property.OWNED or self.get_status() == Property.PLANNED) :
-            if property_config.getValue(Property.MORTAGE_VALUE) is None :
-                property_config.setValue(Property.MORTAGE_VALUE, self.get_price()*(1.0-Property.OWN_FUNDS))
             self.set_mortage(Mortage(property_config))
         else :
             self.__mortage = None
@@ -263,8 +254,9 @@ class PropertyManager :
     def __sort(input : list[Property], low2high : bool) -> list[Property] :
         if len(input) == 0:
             return []
-        return sorted(input, key=lambda obj: (obj.get_buy_age(),  obj.get_worth() if low2high else 1/obj.get_worth() ))   # sort by time to sell (Buy_age and then for price. Less worth first)
-    
+        return sorted(input, key=lambda obj: (obj.get_buy_age(),  obj.get_worth() if low2high else -1.0*obj.get_worth() ))   # sort by time to sell (Buy_age and then for price. Less worth first)
+
+        
     @staticmethod
     def sell(property : Property, data: Data, config: Config) -> bool:
         from tax import TaxHandler
@@ -272,6 +264,8 @@ class PropertyManager :
         if property.get_status() != Property.OWNED :
             logging.debug(f"Cannot sell property {property.get_name()} as it is no longer available.")
             return False
+        # add inflation correction
+        property.set_worth(property.get_worth()*data.get_inflation_correction())
         property.set_status(Property.SOLD)
         PropertyManager.remove_expenses(property)
         mortage = 0.0 if property.get_mortage() is None else property.get_mortage().get_value()
@@ -292,11 +286,16 @@ class PropertyManager :
         if property.get_status() != Property.PLANNED :
             logging.debug(f"Cannot buy property {property.get_name()} as it is no longer available.")
             return False
+        
+        price = property.get_price()
+        
+        property.set_price(property.get_price()*data.get_inflation_correction())
 
         mortage =  PropertyManager.mortage(property, data, config)
               
         if mortage is None :
             logging.debug(f"No mortage from the banks for property {property.get_name()} due to lack of wealth and income.")  # if wealth is not enough to afford mortgage, we can't buy property.  # if income is not enough to afford mortgage, we can't buy property.  # if both are not enough, we can't buy property.  # if mortgage is already paid off, we can't buy property.
+            property.set_price(price)
             return False
         else :   
             new_wealth =  data.get_wealth() - (property.get_price() - mortage.get_value())
@@ -312,7 +311,7 @@ class PropertyManager :
             data.set_wealth(new_wealth)
         
         logging.info(f"Property {property.get_name()} has been bought at age {data.get_actual_age():.2f} for a price of {property.get_price():.0f} CHF and a mortage of {property.get_mortage().get_value():.0f} CHF.") 
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Bought {property.get_name()} at age of {data.get_actual_age():.2f}.  Wealth after that is {data.get_wealth():.0f}) CHF with income of {data.get_actual_income():.0f} ")
+        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Bought {property.get_name()} at age of {data.get_actual_age():.2f}.  Wealth after that is {data.get_wealth():.0f} CHF with income of {data.get_actual_income():.0f} ")
         Output.add_result(Output.BUY_PROPERTY, f"Age: {data.get_actual_age():.2f}", f"{Output.BUY_PROPERTY[1]} {property.get_name()}")
   
         
@@ -349,7 +348,7 @@ class PropertyManager :
         if property.get_status() == Property.OWNED :
             own_funds = 0.0
         else:
-            own_funds = property.get_worth() * Property.OWN_FUNDS
+            own_funds = property.get_price() * Property.OWN_FUNDS
         
         old_mortage = property.get_mortage()
         new_mortage.set_value(max_mortage)
@@ -413,7 +412,7 @@ class PropertyManager :
         new_wealth = wealth    
         new_max_mortage = 0.0
 
-        max_legal_mortage = property.get_worth()*(1.0-Property.OWN_FUNDS)
+        max_legal_mortage = property.get_price()*(1.0-Property.OWN_FUNDS)
         requested_mortage = min(mortage, max_legal_mortage)  # the requested mortage must not exceed the legal limit of 80% of the property price
         i = 0
         while (True) :

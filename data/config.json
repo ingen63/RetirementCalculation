@@ -3,9 +3,9 @@
         "StartAge": 62,
         "StartMonth" : 3,
         "Wealth": 271665.00,
-        "EndAge": 195.0,
+        "EndAge": 100.0,
         "Inflation": 0.01,
-        "Performance": 0.04   
+        "Performance": 0.04
     },
     "Taxes" : {
         "TaxRate" : "2.18",
@@ -32,7 +32,7 @@
     "MoneyFlows": {
         "Savings":  {"50": 1000.0, "{Pension.EarlyRetirement}": 0.0},
         "Income": {"50.00": 9800.00, "{Pension.EarlyRetirement}" : 0.0},
-        "Spendings": {"62" : 9230.0, "65.0" : 7570.0, "70.00" : 7500.0},
+        "Spendings": {"62" : 9230.0, "65.0" : 7570.0, "70.00" : 7270.0},
         "Extra": {"62.3" : -75000.0, "{Pension.EarlyRetirement}": 88600.0}
     },
 
@@ -52,7 +52,6 @@
                 "Status": "Owned",
                 "Price": 745000.0,
                 "Worth":  1590669.0, 
-                "SellAge": 102.0,
                 "RentalIncome": 0,
                 "FixCosts": 600.0,
                 "Mortage": {       
@@ -67,8 +66,8 @@
                 "Name": "Wohnung",
                 "Status": "Planned",
                 "Price":  750000.0,
-                "BuyAge": 102.0, 
-                "Mortage": {     
+                "Mortage": {
+                    "Value" : 600000.0,     
                     "Interest": 0.011,
                     "Term": 10.0,
                     "Amortization": 550.0
@@ -82,7 +81,7 @@
         ]
     },
     "Calculation": {
-        "Method": "Single",
+        "Method": "Scenarios",
         "Single": {
            
         },
@@ -90,6 +89,15 @@
             {
                 "Name": "Early with Age 63.25",
                 "Parameters" : {
+                    "General" : {
+                        "Inflation" : 0.0,
+                        "Performance" : 0.04
+                    }
+                }
+            },
+            {
+                "Name": "Early with Age 63.25",
+                "Parameters": {
                     "General" : {
                         "Inflation" : 0.01,
                         "Performance" : 0.04
@@ -100,8 +108,8 @@
                 "Name": "Early with Age 63.25",
                 "Parameters": {
                     "General" : {
-                        "Inflation" : 0.015,
-                        "Performance" : 0.03
+                        "Inflation" : 0.02,
+                        "Performance" : 0.04
                     }
                 }
             },
@@ -109,17 +117,8 @@
                 "Name": "Early with Age 63.25",
                 "Parameters": {
                     "General" : {
-                        "Inflation" : 0.02,
-                        "Performance" : 0.02
-                    }
-                }
-            },
-            {
-                "Name": "Early with Age 63.25",
-                "Parameters": {
-                    "General" : {
-                        "Inflation" : 0.02,
-                        "Performance" : 0.0
+                        "Inflation" : 0.03,
+                        "Performance" : 0.04
                     }
                 }
             }
