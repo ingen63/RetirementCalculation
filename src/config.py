@@ -56,8 +56,13 @@ class Config:
     CALCULATION_SINGLE = "Calculation.Single"
 
     CALCULATION_HISTORICAL = "Calculation.Historical"
-    CALCULATION_HISTORICAL_PORTFOLIOBALANCE = "Calculation.Historical.portfolioBalance"
-    CALCULATION_HISTORICAL_HISTORICALDATA = "Calculation.Historical.historicalData"
+    CALCULATION_HISTORICAL_STARTAGE = "Calculation.Historical.StartAge"
+    CALCULATION_HISTORICAL_ENDAGE = "Calculation.Historical.EndAge"
+    CALCULATION_HISTORICAL_STARTMONTH = "Calculation.Historical.StartMonth"
+    CALCULATION_HISTORICAL_PORTFOLIOBALANCE = "Calculation.Historical.PortfolioBalance"
+    CALCULATION_HISTORICAL_DATA = "Calculation.Historical.Data"
+    CALCULATION_HISTORICAL_YEAR = "Calculation.Historical.Year"
+    
     CALCULATION_SCENARIOS = "Calculation.Scenarios"
     CALCULATION_SCENARIOS_NAME = "Name"
     CALCULATION_SCENARIOS_DESCRIPTION = "Description"

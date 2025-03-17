@@ -71,6 +71,16 @@ class EndSimulationEvent(Event):
         return "EndSimulationEvent"
        
     def after_method(self, config, data) -> bool:
+        
+        Output.add_result(Output.AVERAGE_PERFORMANCE, f"{data.yearly_average_performance()*100:.2f} %")
+        Output.add_result(Output.AVERAGE_INFLATION, f"{data.yearly_average_inflation()*100:.2f} %")
+        
+        if (data.get_historical_year() is not None) :
+            year = data.get_historical_year()
+            Output.add_inflation(year, data.yearly_average_inflation())
+            Output.add_performance(year, data.yearly_average_performance())
+            Output.add_wealth(year, data.get_wealth())
+        
         self.__ms = time.time()*1000 - self.__ms
         logging.info(f"Finished simulation after {self.__ms} ms")
         return True
@@ -137,7 +147,8 @@ class LumpsumEvent(Event):
         lumpsum -= lumpsum_tax
         data.set_lumpsum(lumpsum)
         data.set_wealth(data.get_wealth()+data.get_lumpsum())
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Lumpsum Payment of {lumpsum : .0f} CHF at age {data.get_actual_age() : .2f} and wealth of {data.get_wealth() : .0f} CHF")
+        ratio = config.getActualValue(self.get_month(),Config.PENSION_PRIVATE_LUMPSUMRATIO)
+        logging.info (f"Lumpsum --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Lumpsum: {lumpsum : 7.0f} CHF Lumpsum Ratio: {ratio*100 : 5.2f} %")
         return True
 
     def after_method(self, config, data):
@@ -176,13 +187,11 @@ class EarlyRetirmentEvent(Event) :
         
         Output.add_result(Output.PK_CAPITAL, f"{data.get_pk_capital():.0f} CHF")
         Output.add_result(Output.PK_LUMPSUM_RATIO, f"{data.get_lumpsum_ratio()*100.0:.2f} %")
-        Output.add_result(Output.INFLATION_RATE, f"{data.get_inflation()*100.0:.2f} %")
-        Output.add_result(Output.INTEREST_RATE, f"{data.get_performance()*100.0:.2f} %")
         
+        pk_capital = data.get_pk_capital()
         self.__private_pension(config, data)
-        
-        logging.info (f"Early Retirement: Wealth: {data.get_wealth():.2f} Severance Pay: {data.get_extra():.2f} Lumpsum:  {data.get_lumpsum():.2f}  Private Pension: {data.get_private_pension():.2f} ")
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Early Retirment with age of {data.get_actual_age():.2f} and wealth of {data.get_wealth():.0f} CHF with income of {data.get_private_pension():.0f} CHF")
+ 
+        logging.info (f"Early Retirement --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Capital: {pk_capital : 7.0f} CHF Severance Pay: {data.get_extra():7.0f} CHF  Private Pension: {data.get_private_pension():6.0f} CHF")
         
         Output.add_result(Output.WEALTH_EARLY, f"{data.get_wealth():.0f} CHF")
         return True
@@ -213,9 +222,6 @@ class LegalRetirmentEvent(Event) :
     def before_method(self, config: Config, data : Data) -> bool:
         
         data.set_legal_pension(config.getActualValue(self.get_month(), Config.PENSION_LEGAL))
-      
-        logging.info(f"Legal Retirement: Wealth: {data.get_wealth():.2f} Legal Pension: {data.get_legal_pension():.2f}")
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Legal Retirment with age of {data.get_actual_age():.2f} and wealth of {data.get_wealth():.0f} CHF with income of {data.get_private_pension()+data.get_legal_pension():.0f} CHF")
         
         Output.add_result(Output.WEALTH_LEGAL, f"{data.get_wealth():.0f} CHF")
         Output.add_result(Output.PENSION, f"{data.get_legal_pension()+data.get_private_pension():.0f} CHF")
@@ -223,11 +229,14 @@ class LegalRetirmentEvent(Event) :
         
         
         property =  PropertyManager.get_property_for_sale()
+        profit=0.0
         if property is not None :
             profit = property.get_worth() - property.get_price()
             profit -= TaxHandler.sales_tax(config, property)
         withdrawal_rate = Config.MONTHS * (data.get_spending() - (data.get_legal_pension() + data.get_private_pension())) / (profit + data.get_wealth())
         
+        
+        logging.info (f"Legal Retirement --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF WithDraw Ratio: {withdrawal_rate*100.0 : 5.2f} % Pension: {data.get_private_pension()+ data.get_legal_pension():6.0f} CHF")
         Output.add_result(Output.WITHDRAWAL_RATE, f"{withdrawal_rate*100.0:.2f} %")
 
         

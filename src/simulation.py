@@ -13,11 +13,12 @@ class Simulation :
     
     output = Output()
 
-    def   init(self, config : Config) -> Data :
+    def   init(self, config : Config,  historical_year: int = None) -> Data :
         
         EventHandler.reset_events()
         PropertyManager.reset()
         data = Data(config.getStartAge(), config.getEndAge(), config.getStartMonth())
+        data.set_historical_year(historical_year)
 
         EventHandler.add_event(StartSimulationEvent(config.getStartMonth()))
 
@@ -70,6 +71,12 @@ class Simulation :
         EventHandler.add_event(EndSimulationEvent(config.getEndMonth()))
         
         EventHandler.init(config, data)
+        
+        if (data.get_historical_year() is not None) :
+            for property in PropertyManager.get_properties(Property.OWNED) :
+                Output.add_sell(data.get_historical_year(), property.get_name(),Output.NEVER)
+            for property in PropertyManager.get_properties(Property.PLANNED):
+                Output.add_sell(data.get_historical_year(), property.get_name(), Output.NEVER)
 
         return data
 
@@ -77,7 +84,7 @@ class Simulation :
     def run(self, data : Data, config : Config) :
         
         
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Simulation started with age of {data.get_start_age()} until age of {data.get_end_age()}")
+        logging.info(f"Simulation started -->  {Output.get_name()} Age {data.get_start_age(): 5.2f} End Age: {data.get_end_age() : 5.2f}")
         
         Output.add_result(Output.START_AGE, f"{data.get_start_age():.2f}")
         Output.add_result(Output.LEGAL_RETIREMENT_AGE, f"{config.getLegalRetirementAge():.2f}")
@@ -119,6 +126,7 @@ class Simulation :
         
         if month % Config.MONTHS == 0 :
             data.push_inflation() # push inflation to history for later inflation corrections
+            data.push_performance() # push performance to history for later performance corrections
             
         # adjust spendigs accodording to inflation
         spending = data.get_spending()
@@ -154,7 +162,7 @@ class Simulation :
                            
 
        
-            logging.info(f"Age: {data.get_actual_age():5.2f}, Wealth: {wealth:7.0f} CHF, Capital: {pk_capital :7.2f} CHF Total Income: {data.get_actual_income() :6.0f} CHF, Total Expenses: {total_deductions : 6.0f} CHF. Capital Tax: {capital_tax : 6.0f} CHF Income Tax: {income_tax : 6.0f}")
+            logging.info(f"Age: {data.get_actual_age():5.2f}, Wealth: {wealth:7.0f} CHF, Total Income: {data.get_actual_income() :6.0f} CHF, Total Expenses: {total_deductions : 6.0f} CHF, Performance: {data.get_performance()*100 : 5.2f} % Inflation: {data.get_inflation()*100 : 5.2f}")
            
             
         data.set_wealth(wealth)

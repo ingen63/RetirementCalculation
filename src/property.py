@@ -273,10 +273,9 @@ class PropertyManager :
         tax  = TaxHandler.sales_tax(config, property) 
         
         data.set_wealth(data.get_wealth() + property.get_worth() - mortage - tax) 
-        logging.info(f"Property {property.get_name()} has been sold at age {data.get_actual_age():.2f} for a price of {property.get_worth():.0f} CHF and a profit of {profit - tax:.0f} CHF.") 
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Sold {property.get_name()} at age of {data.get_actual_age():.2f}.  Wealth after that is {data.get_wealth():.0f} CHF with income of {data.get_actual_income():.0f} ")
+        logging.info (f"Sell {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Worth: {property.get_worth() : 7.0f} CHF Profit: {profit-tax:7.0f} CHF")
         Output.add_result(Output.SELL_PROPERTY, f"Age: {data.get_actual_age():.2f}", f"{Output.SELL_PROPERTY[1]} {property.get_name()}")
-        return True
+        Output.add_sell(data.get_historical_year(), property.get_name(), data.get_actual_age())
         
         
      
@@ -309,9 +308,8 @@ class PropertyManager :
             property.set_buy_age(config.month2age(data.get_actual_month()))
             PropertyManager.add_expenses(property)
             data.set_wealth(new_wealth)
-        
-        logging.info(f"Property {property.get_name()} has been bought at age {data.get_actual_age():.2f} for a price of {property.get_price():.0f} CHF and a mortage of {property.get_mortage().get_value():.0f} CHF.") 
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Bought {property.get_name()} at age of {data.get_actual_age():.2f}.  Wealth after that is {data.get_wealth():.0f} CHF with income of {data.get_actual_income():.0f} ")
+            
+        logging.info (f"Buy {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Price: {property.get_price() : 7.0f} CHF Mortage: {property.get_mortage().get_value():7.0f} CHF")
         Output.add_result(Output.BUY_PROPERTY, f"Age: {data.get_actual_age():.2f}", f"{Output.BUY_PROPERTY[1]} {property.get_name()}")
   
         
@@ -333,8 +331,7 @@ class PropertyManager :
             property.set_mortage(new_mortage)
             PropertyManager.add_expenses(property)
             data.set_wealth(data.get_wealth() - amortization)
-            logging.debug(f"Mortgage has been renewed for {property.get_name()} at age {data.get_actual_age():.2f} for a new mortage of {property.get_mortage().get_value():.0f} CHF.")
-            logging.getLogger(Config.LOGGER_SUMMARY).info(f"Renewd mortage for {property.get_name()} at age of {data.get_actual_age():.2f}. Had to amortize {amortization :.0f} CHF")
+            logging.info (f"Mortage {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Amortization: {amortization : 7.0f} CHF ")
         return True
         
         
@@ -375,8 +372,7 @@ class PropertyManager :
         
         property.set_status(Property.RENTED )
         PropertyManager.add_expenses(property)
-        logging.info(f"Rented {property.get_name()} for {-1.0*property.get_rental_income()}.")   
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Rented {property.get_name()} at age of {data.get_actual_age() :.2f}.") 
+        logging.info (f"Rent {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Rent: {-1.0*property.get_rental_income() : 5.0f} CHF ")
         return True
 
     @staticmethod
@@ -386,8 +382,7 @@ class PropertyManager :
         for property in properties :
             property.set_status(Property.PLANNED_FOR_RENT)
             PropertyManager.remove_expenses(property)
-            logging.info(f"Finsihed renting {property.get_name()} for {-1.0*property.get_rental_income()}.")   
-            logging.get_logger(Config.LOGGER_SUMMARY).info(f"Canceled appertement {property.get_name()} at age of {data.get_actual_age():.2f}.")  
+            logging.info (f"Canceled {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Rent: {-1.0*property.get_rental_income() : 5.0f} CHF ")
             
         return True
     

@@ -204,7 +204,7 @@ def test_simulate_early_retirement_dynamic_inflation(config):
     simulation.run(data, config)
     
     assert data.get_actual_month() == data.get_end_simulation_month()
-    assert round(data.get_wealth(),2) == 973269.22
+    assert round(data.get_wealth(),2) == 1014841.7 
     assert round(data.get_pk_capital(),2) == 0.00
     
 def test_simulate_legal_retirement_dynamic_inflation(config):

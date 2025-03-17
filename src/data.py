@@ -54,6 +54,7 @@ class Data:
         self.__yearly_income = 0.0
         
         self.__inflation_history = []
+        self.__performance_history = []
         
         self.__start_simulation_month = start_month
         self.__actual_month = start_month
@@ -61,6 +62,8 @@ class Data:
         self.__start_age = start_age
         self.__end_age = end_age
         self.__actual_age = start_age
+        
+        self.__historical_year = None
         
         
     def set_value(self, key, value):
@@ -224,7 +227,13 @@ class Data:
     def get_actual_age(self) -> float:
         return self.__actual_age
         
+    def get_historical_year(self) -> int:
+        return self.__historical_year
     
+    def set_historical_year(self, value : int):
+        if value is not None :
+            self.__historical_year = int(value)
+        
     def get_change_value_event(self) -> set:
         return self.__change_value_events.keys()
     
@@ -246,6 +255,28 @@ class Data:
     def get_inflation_correction(self) :
         correction = 1.0
         for i in range(len(self.__inflation_history)):
-            correction *= (1.0+self.__inflation_history[i])
+            correction *= (1.0+self.__inflation_history[i])         
+        return correction
+    
+    def yearly_average_inflation(self) :
+        if (len(self.__inflation_history) == 0) :
+            return 0.0
+        return self.get_inflation_correction()**(1.0/len(self.__inflation_history)) - 1.0
+    
+    def push_performance(self) :
+        self.__performance_history.append(self.get_performance())
+        
+    def get_performance_correction(self) :
+        correction = 1.0
+        for i in range(len(self.__performance_history)):
+            correction *= (1.0+self.__performance_history[i])
             
         return correction
+    
+    def yearly_average_performance(self) :
+        if (len(self.__performance_history) == 0) :
+            return 0.0
+        return self.get_performance_correction()**(1.0/len(self.__performance_history)) - 1.0
+    
+    
+    
