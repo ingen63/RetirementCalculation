@@ -119,7 +119,7 @@ class Simulation :
         logging.getLogger(Config.LOGGER_SUMMARY).info(f"Simulation finished at age of {data.get_actual_age()} with wealth of {data.get_wealth() : .0f}")
         
         Output.add_result(Output.TIME_TO_GO, f"{data.get_actual_age():.2f}")
-        Output.add_result(Output.REMAINING_WEALTH,f"{max(0.0,data.get_wealth()):.0f} CHF")
+        Output.add_result(Output.REMAINING_WEALTH,f"{max(0.0,data.get_wealth()):,.0f} CHF")
     
     
     def __one_month(self, month : int, data : Data, config : Config) :

@@ -37,10 +37,13 @@ def main(file : str, log_level : int, overrides : str) :
         
     print(" ------------------------------------------------------------------------------------------------")
     print()
-    Output.print()
+    Output.print(list(range(1,Output.columns)))
     print()
     print("------------------------------------------------------------------------------------------------")
     Output.print_ranking()
+    print("------------------------------------------------------------------------------------------------")
+    Output.print_selected(Output.get_best_and_worth(Output.WEALTH[1], 2))
+    print("------------------------------------------------------------------------------------------------")
     
 def scenarios(config : Config): 
     

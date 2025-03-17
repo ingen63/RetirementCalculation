@@ -64,14 +64,29 @@ class Output :
         Output.output[key][Output.scenario] = value
  
     @staticmethod
-    def print() :
+    def print(index :list) :
         
         sorted_output = dict(sorted(Output.output.items(), key=lambda item: item[1][0][0]))
         for key in sorted_output.keys():
             print(f"{key :<25s}", end=",")
-            for i in range(1, Output.columns) :
+            for i in index:
                 print(f"{sorted_output[key][i] :>28s}", end=",")
             print()
+            
+            
+    @staticmethod
+    def print_selected(years : list) :
+      
+        index = []
+        for year in years :
+            filter = f"Historical Simulation: {year}"
+            for i in range(1, Output.columns) :
+                name = Output.output[Output.SCENARIO_NAME[1]][i]
+                if name == filter :
+                    index.append(i)
+        Output.print(index)
+            
+            
             
     @staticmethod
     def get_name() :
@@ -111,8 +126,25 @@ class Output :
                 Output.__print_best_and_worth(key,dict(sorted(Output.ranking[key].items(), key=lambda item: item[1], reverse=False)))
             else :
                 Output.__print_best_and_worth(key,dict(sorted(Output.ranking[key].items(), key=lambda item: item[1], reverse=True)))
-            
+    
+    @staticmethod       
+    def get_best_and_worth(type : str = None, places : int = 1) -> list[int]:
+        if type is None :
+            type =  Output.WEALTH[1]
         
+        years = list(dict(sorted(Output.ranking[type].items(), key=lambda item: item[1], reverse=True)).keys())
+         
+        if len(years) < 2*places :
+            print("Not enough simulations to present a detailed ranking") 
+            return
+
+        index = []
+        for i in reversed(range(len(years)-places, len(years))): 
+            index.append(years[i])
+        for i in range(places) :
+            index.append(years[i])
+        return index 
+           
             
     @staticmethod
     def __print_best_and_worth(type: str, sorted_dict: dict) :

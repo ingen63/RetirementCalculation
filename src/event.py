@@ -185,7 +185,7 @@ class EarlyRetirmentEvent(Event) :
     
     def before_method(self, config: Config, data : Data)  -> bool :
         
-        Output.add_result(Output.PK_CAPITAL, f"{data.get_pk_capital():.0f} CHF")
+        Output.add_result(Output.PK_CAPITAL, f"{data.get_pk_capital():,.0f} CHF")
         Output.add_result(Output.PK_LUMPSUM_RATIO, f"{data.get_lumpsum_ratio()*100.0:.2f} %")
         
         pk_capital = data.get_pk_capital()
@@ -193,7 +193,7 @@ class EarlyRetirmentEvent(Event) :
  
         logging.info (f"Early Retirement --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Capital: {pk_capital : 7.0f} CHF Severance Pay: {data.get_extra():7.0f} CHF  Private Pension: {data.get_private_pension():6.0f} CHF")
         
-        Output.add_result(Output.WEALTH_EARLY, f"{data.get_wealth():.0f} CHF")
+        Output.add_result(Output.WEALTH_EARLY, f"{data.get_wealth():,.0f} CHF")
         return True
                        
         
@@ -223,7 +223,7 @@ class LegalRetirmentEvent(Event) :
         
         data.set_legal_pension(config.getActualValue(self.get_month(), Config.PENSION_LEGAL))
         
-        Output.add_result(Output.WEALTH_LEGAL, f"{data.get_wealth():.0f} CHF")
+        Output.add_result(Output.WEALTH_LEGAL, f"{data.get_wealth():,.0f} CHF")
         Output.add_result(Output.PENSION, f"{data.get_legal_pension()+data.get_private_pension():.0f} CHF")
         Output.add_result(Output.SPENDING, f"{data.get_spending()+PropertyManager.get_properties_expenses():.0f} CHF")
         
