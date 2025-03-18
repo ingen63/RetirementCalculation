@@ -74,9 +74,9 @@ class Simulation :
         
         if (data.get_historical_year() is not None) :
             for property in PropertyManager.get_properties(Property.OWNED) :
-                Output.add_sell(data.get_historical_year(), property.get_name(),Output.NEVER)
+                Output.add_sell_ranking(data.get_historical_year(), property.get_name(),Output.NEVER)
             for property in PropertyManager.get_properties(Property.PLANNED):
-                Output.add_sell(data.get_historical_year(), property.get_name(), Output.NEVER)
+                Output.add_sell_ranking(data.get_historical_year(), property.get_name(), Output.NEVER)
 
         return data
 
@@ -119,8 +119,8 @@ class Simulation :
         logging.getLogger(Config.LOGGER_SUMMARY).info(f"Simulation finished at age of {data.get_actual_age()} with wealth of {data.get_wealth() : .0f}")
         
         Output.add_result(Output.TIME_TO_GO, f"{data.get_actual_age():.2f}")
-        Output.add_result(Output.REMAINING_WEALTH,f"{max(0.0,data.get_wealth()):,.0f} CHF")
-    
+        Output.add_result(Output.REMAINING_WEALTH,f"{data.get_wealth():,.0f} CHF")
+        Output.add_result(Output.TOTAL_ASSETS,f"{data.get_total_assets():,.0f} CHF")
     
     def __one_month(self, month : int, data : Data, config : Config) :
         

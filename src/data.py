@@ -1,9 +1,7 @@
 
 
 import logging
-
 from config import Config
-
 
 class Data:
     
@@ -64,6 +62,8 @@ class Data:
         self.__actual_age = start_age
         
         self.__historical_year = None
+        
+        self._total_assets = 0.0
         
         
     def set_value(self, key, value):
@@ -248,6 +248,10 @@ class Data:
         income = self.get_private_pension() + self.get_legal_pension() + self.get_income()
         income += self.get_wealth() * self.get_performance()/Config.MONTHS
         return income
+    
+    def get_total_assets(self) -> float:
+        from property import PropertyManager
+        return self.get_wealth() + PropertyManager.get_total_assets()
     
     def push_inflation(self) :
         self.__inflation_history.append(self.get_inflation())

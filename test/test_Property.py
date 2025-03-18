@@ -24,6 +24,7 @@ def config():
                     "Status": "Owned",
                     "Price": 1000.0,
                     "Worth":  2000.0, 
+                    "InflationCorrection": False,
                     "RentalIncome": 10.0,
                     "FixCosts": 750.0,
                     "SellAge": 72.0,
@@ -56,6 +57,7 @@ def test_property(config: Config):
     assert property.get_status() == property_config.getValue(Property.STATUS)
     assert round(property.get_price(),2) == property_config.getValue(Property.PRICE)
     assert round(property.get_worth(),2) == property_config.getValue(Property.WORTH)
+    assert property.get_inflation_correction() == bool(property_config.getValue(Property.INFLATIONCORRECTION))
     assert property.get_buy_age() == property_config.getValue(Property.BUYAGE)
     assert property.get_sell_age() == property_config.getValue(Property.SELLAGE)
     assert property.get_mortage().get_value() == property_config.getValue(Property.MORTAGE_VALUE)

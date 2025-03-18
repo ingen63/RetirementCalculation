@@ -77,9 +77,10 @@ class EndSimulationEvent(Event):
         
         if (data.get_historical_year() is not None) :
             year = data.get_historical_year()
-            Output.add_inflation(year, data.yearly_average_inflation())
-            Output.add_performance(year, data.yearly_average_performance())
-            Output.add_wealth(year, data.get_wealth())
+            Output.add_inflation_ranking(year, data.yearly_average_inflation())
+            Output.add_performance_ranking(year, data.yearly_average_performance())
+            Output.add_wealth_ranking(year, data.get_wealth())
+            Output.add_total_assests_ranking(year, data.get_total_assets())
         
         self.__ms = time.time()*1000 - self.__ms
         logging.info(f"Finished simulation after {self.__ms} ms")

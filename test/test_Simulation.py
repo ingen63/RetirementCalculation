@@ -78,6 +78,8 @@ def test_init(config):
 
 
 def test_simulate_before_retirement_static(config):
+    
+     
     simulation = Simulation()
 
     config.setValue(Config.GENERAL_ENDAGE, 55)

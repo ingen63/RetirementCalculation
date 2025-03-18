@@ -1,6 +1,7 @@
 
 import logging
 import argparse
+import time
 from config import Config
 from historical import HistoricalData
 from output import Output
@@ -9,6 +10,7 @@ from simulation import Simulation
 
 def main(file : str, log_level : int, overrides : str) :
     
+    start_time = time.time()*1000
     intialize_logging(log_level)
     
     logging.info("------------------------------------------------------------------------")
@@ -37,18 +39,26 @@ def main(file : str, log_level : int, overrides : str) :
         
     print(" ------------------------------------------------------------------------------------------------")
     print()
-    Output.print(list(range(1,Output.columns)))
+    Output.print(list(range(1,Output.scenario+1)))
     print()
     print("------------------------------------------------------------------------------------------------")
-    Output.print_ranking()
-    print("------------------------------------------------------------------------------------------------")
-    Output.print_selected(Output.get_best_and_worth(Output.WEALTH[1], 2))
-    print("------------------------------------------------------------------------------------------------")
+    if config.getValue(Config.CALCULATION_METHOD) == "Historical":
+        Output.print_ranking()
+        print("------------------------------------------------------------------------------------------------")
+        [best,worth] = Output.get_best_and_worth(Output.TOTAL_ASSETS[1], 2)
+        Output.print_selected( worth + best)
+        print("------------------------------------------------------------------------------------------------")
+    
+    end_time = time.time()*1000
+    duration = end_time - start_time
+    if (duration < 1000) :
+        logging.info(f"Overall execution time {duration} ms")
+    else:
+        logging.info(f"Overall execution time {duration/1000:.2f} sec")
     
 def scenarios(config : Config): 
     
     scenarios = config.getValue(Config.CALCULATION_SCENARIOS)
-    Output.set_scenarios(len(scenarios))
     for scenario in scenarios: 
         scenarion_config = config.clone()
 
@@ -90,8 +100,6 @@ def historical_scenarios(reference : Config):
             if  index is None :
                 logging.error(f"Historical data does not cover year {year}")
             historical_index.append(index)  
-
-    Output.set_scenarios(len(historical_index))
     
     
     

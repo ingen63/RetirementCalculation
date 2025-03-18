@@ -77,6 +77,7 @@ class Property :
     STATUS = "Status"
     WORTH = "Worth"
     PRICE  = "Price"
+    INFLATIONCORRECTION = "InflationCorrection"
     BUYAGE = "BuyAge"
     SELLAGE = "SellAge"
     FIXCOSTS = "FixCosts"
@@ -104,6 +105,7 @@ class Property :
         self.set_status(property_config.getValue(Property.STATUS, Property.PLANNED))
         self.set_price(property_config.getValue(Property.PRICE,0.0))
         self.set_worth(property_config.getValue(Property.WORTH,self.get_price()))
+        self.set_inflation_correction(bool(property_config.getValue(Property.INFLATIONCORRECTION, False)))
         self.set_buy_age(property_config.getValue(Property.BUYAGE,Config.MAX_AGE))
         self.set_sell_age(property_config.getValue(Property.SELLAGE, Config.MAX_AGE))
         self.set_rental_income(property_config.getValue(Property.RENTALINCOME,0.0))
@@ -139,6 +141,13 @@ class Property :
     def set_worth(self, worth : float) :
         self.__worth = worth
     
+    def get_inflation_correction(self) -> bool :
+        return self.__inflation_correction
+    
+    def set_inflation_correction(self, inflation_correction : bool) :
+        self.__inflation_correction = False if (inflation_correction is None) else inflation_correction  # default to False if None provided
+        self.__inflation_correction = inflation_correction
+        
     def get_buy_age(self) -> float :
         return self.__buy_age
     
@@ -261,11 +270,15 @@ class PropertyManager :
     def sell(property : Property, data: Data, config: Config) -> bool:
         from tax import TaxHandler
         
+        # verify the the property to be sold is still owned
         if property.get_status() != Property.OWNED :
             logging.debug(f"Cannot sell property {property.get_name()} as it is no longer available.")
             return False
+        
         # add inflation correction
-        property.set_worth(property.get_worth()*data.get_inflation_correction())
+        if property.get_inflation_correction() is True :
+            property.set_worth(property.get_worth()*data.get_inflation_correction())
+        
         property.set_status(Property.SOLD)
         PropertyManager.remove_expenses(property)
         mortage = 0.0 if property.get_mortage() is None else property.get_mortage().get_value()
@@ -275,7 +288,9 @@ class PropertyManager :
         data.set_wealth(data.get_wealth() + property.get_worth() - mortage - tax) 
         logging.info (f"Sell {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Worth: {property.get_worth() : 7.0f} CHF Profit: {profit-tax:7.0f} CHF")
         Output.add_result(Output.SELL_PROPERTY, f"Age: {data.get_actual_age():.2f}", f"{Output.SELL_PROPERTY[1]} {property.get_name()}")
-        Output.add_sell(data.get_historical_year(), property.get_name(), data.get_actual_age())
+        Output.add_sell_ranking(data.get_historical_year(), property.get_name(), data.get_actual_age())
+        
+        return True
         
         
      
@@ -288,7 +303,8 @@ class PropertyManager :
         
         price = property.get_price()
         
-        property.set_price(property.get_price()*data.get_inflation_correction())
+        if property.get_inflation_correction() is True :
+            property.set_price(property.get_price()*data.get_inflation_correction())
 
         mortage =  PropertyManager.mortage(property, data, config)
               
@@ -446,6 +462,14 @@ class PropertyManager :
             
     
        return income
+   
+    @staticmethod
+    def get_total_assets() -> float :
+        properties = PropertyManager.get_properties(Property.OWNED)
+        total_assets = 0.0
+        for property in properties :
+            total_assets += property.get_worth()    
+        return total_assets
         
 
 

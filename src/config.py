@@ -401,6 +401,7 @@ class Config:
             - For string inputs, it uses "." as the decimal separator.
             - If the input is already a numeric type, it will be returned as-is.
         """
+    
         try:
             keys = value.split(".")
             number = keys[0]
@@ -415,6 +416,7 @@ class Config:
             except ValueError:
                 return value
         except (ValueError, AttributeError):
+            
             return value
 
     

@@ -62,4 +62,39 @@ def test_time_to_sell(config) :
     assert data.time_to_sell() is True
     
     
-
+def test_inflation_correction(config) :
+    
+    data = Data(0,10)
+    
+    data.set_inflation(0.0)
+    
+    assert data.get_inflation_correction() == 1.0
+    data.push_inflation()
+    assert data.get_inflation_correction() == 1.0
+    data.push_inflation()
+    data.push_inflation()
+    assert data.get_inflation_correction() == 1.0
+    
+    data = Data(0,10)
+    data.set_inflation(0.1)
+    data.push_inflation()
+    assert data.get_inflation_correction() == 1.1
+    data.push_inflation()
+    data.push_inflation()
+    assert round(data.get_inflation_correction(),6) == 1.331000
+    
+        
+    data = Data(0,10)
+    data.set_inflation(0.1)
+    data.push_inflation()
+    data.set_inflation(0.2)
+    data.push_inflation()
+    data.set_inflation(0.0)
+    data.push_inflation()
+    data.set_inflation(0.3)
+    data.push_inflation()
+    assert round(data.get_inflation_correction(),6) == 1.716
+    
+    
+    
+    
