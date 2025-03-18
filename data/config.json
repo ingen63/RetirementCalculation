@@ -1,11 +1,11 @@
 {
     "General": {
-        "StartAge": 62,
-        "StartMonth" : 1,
+        "StartAge": 59,
+        "StartMonth" : 3,
         "Wealth": 271665.00,
-        "EndAge": 100.0,
+        "EndAge": 95.0,
         "Inflation": 0.02,
-        "Performance": 0.0623
+        "Performance": 0.04
     },
     "Taxes" : {
         "TaxRate" : "2.18",
@@ -17,10 +17,10 @@
     },
 
     "Pension": {
-        "EarlyRetirement" : 62,
+        "EarlyRetirement" : 63,
         "LegalRetirement" : 65,
         "Private": {
-            "Capital": 1494352.0,
+            "Capital": 1022009.00,
             "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.65},
             "ConversionRate": 0.0408, 
             "Contribution":  {"50": 4554.0 },
@@ -30,10 +30,11 @@
     },
 
     "MoneyFlows": {
-        "Savings":  {"50": 1000.0, "{Pension.EarlyRetirement}": 0.0},
-        "Income": {"50.00": 9800.00, "{Pension.EarlyRetirement}" : 0.0},
-        "Spendings": {"62" : 9930.0, "65.0" : 7970.0, "70.00" : 7270.0},
-        "Extra": {"63" : -95000, "65" : -30000, "{Pension.EarlyRetirement}": 88600.0} 
+        "Savings":  {"{General.StartAge}": 1000.0, "{Pension.EarlyRetirement}": 0.0},
+        "Income": {"{General.StartAge}": 10800.00, "{Pension.EarlyRetirement}" : 0.0},
+        "Spendings": {"{General.StartAge}" : 9930.0, "65.0" : 7970.0, "70.00" : 7270.0},
+        "Extra": {"63" : -95000, "65" : -30000, "{Pension.EarlyRetirement}": 88600.0}, 
+        "_Extra": {"63" : -95000, "65" : -30000} 
     },
 
 
@@ -83,44 +84,62 @@
         ]
     },
     "Calculation": {
-        "Method": "Historical",
+        "Method": "Scenarios",
         "Single": {
            
         },
         "Scenarios": [
             {
-                "Name": "Early with Age 63.25",
+                "Name": "Early with Age 59",
                 "Parameters" : {
-                    "General" : {
-                        "Inflation" : 0.0,
-                        "Performance" : 0.04
+                    "Pension" : {
+                        "EarlyRetirement" : 59,
+                        "ConversionRate" : 0.0382
                     }
                 }
             },
             {
-                "Name": "Early with Age 63.25",
+                "Name": "Early with Age 60",
                 "Parameters": {
-                    "General" : {
-                        "Inflation" : 0.01,
-                        "Performance" : 0.04
+                    "Pension" : {
+                        "EarlyRetirement" : 60,
+                        "ConversionRate" : 0.0388
                     }
                 }
             },
             {
-                "Name": "Early with Age 63.25",
+                "Name": "Early with Age 61",
                 "Parameters": {
-                    "General" : {
-                        "Inflation" : 0.02,
-                        "Performance" : 0.04
+                    "Pension" : {
+                        "EarlyRetirement" :61,
+                        "ConversionRate" : 0.0396
                     }
                 }
             },
             {
-                "Name": "Early with Age 63.25",
+                "Name": "Early with Age 62",
                 "Parameters": {
-                    "General" : {
-                        "Inflation" : 0.03,
-                        "Performance" : 0.04
+                    "Pension" : {
+                        "EarlyRetirement" :62,
+                        "ConversionRate" : 0.0406
+                    }
+                }
+            },
+            {
+                "Name": "Early with Age 63",
+                "Parameters": {
+                    "Pension" : {
+                        "EarlyRetirement" :63,
+                        "ConversionRate" : 0.0416
+                    }
+                }
+            },
+            {
+                "Name": "Early with Age 64",
+                "Parameters": {
+                    "Pension" : {
+                        "EarlyRetirement" :64,
+                        "ConversionRate" : 0.0426
                     }
                 }
             }

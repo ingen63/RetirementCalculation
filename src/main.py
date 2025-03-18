@@ -21,18 +21,19 @@ def main(file : str, log_level : int, overrides : str) :
     if (file is None) :
         file = "./data/config.json"
     config = Config().load(file)
-    config.replace_variables()
-    override(config, overrides)
+
     
     if config.getValue(Config.CALCULATION_METHOD) == "Single":
+        config.replace_variables()
+        override(config, overrides)
         Output.add_result(Output.SCENARIO_NAME,"Single simulation")
-
+        
         start_single_simulation(config)
         
     elif config.getValue(Config.CALCULATION_METHOD) == "Scenarios":
-        scenarios(config)
+        scenarios(config, overrides)
     elif config.getValue(Config.CALCULATION_METHOD) == "Historical" :
-        historical_scenarios(config)
+        historical_scenarios(config, overrides)
     else:
         logging.error(f"Unsupported calculation method '{config.getValue(Config.CALCULATION_METHOD)}'")
         
@@ -41,12 +42,12 @@ def main(file : str, log_level : int, overrides : str) :
     print()
     Output.print(list(range(1,Output.scenario+1)))
     print()
-    print("------------------------------------------------------------------------------------------------")
-    if config.getValue(Config.CALCULATION_METHOD) == "Historical":
+    if config.getValue(Config.CALCULATION_METHOD) != "Single":
+        print("------------------------------------------------------------------------------------------------")
         Output.print_ranking()
         print("------------------------------------------------------------------------------------------------")
-        [best,worth] = Output.get_best_and_worth(Output.TOTAL_ASSETS[1], 2)
-        Output.print_selected( worth + best)
+        [best,worth] = Output.get_best_and_worth(Output.TOTAL_ASSETS[1], 1)
+        Output.print( worth + best)
         print("------------------------------------------------------------------------------------------------")
     
     end_time = time.time()*1000
@@ -56,19 +57,28 @@ def main(file : str, log_level : int, overrides : str) :
     else:
         logging.info(f"Overall execution time {duration/1000:.2f} sec")
     
-def scenarios(config : Config): 
+def scenarios(config : Config, overrides : str): 
     
     scenarios = config.getValue(Config.CALCULATION_SCENARIOS)
     for scenario in scenarios: 
         scenarion_config = config.clone()
-
         scenarion_config.setValues(scenario[Config.CALCULATION_SCENARIOS_PARAMETERS])
+        
+        scenarion_config.replace_variables()
+        override(scenarion_config, overrides)
+        
         Output.add_result(Output.SCENARIO_NAME,scenario[Config.CALCULATION_SCENARIOS_NAME])
+        Output.add_result(Output.HISTORICAL_YEARS,scenario[Config.CALCULATION_SCENARIOS_NAME])
         start_single_simulation(scenarion_config) 
         Output.next_scenario()
+        print("------------------------------------------------------------------------------------------------")
         
-def historical_scenarios(reference : Config):
+def historical_scenarios(reference : Config, overrides : str):
     config = reference.clone()
+    
+    config.replace_variables()
+    override(config, overrides)
+    
     
     config.setValue(Config.GENERAL_STARTAGE, config.getValue(Config.CALCULATION_HISTORICAL_STARTAGE,config.getEarlyRetirementAge()))
     config.setValue(Config.GENERAL_STARTMONTH, config.getValue(Config.CALCULATION_HISTORICAL_STARTMONTH,config.age2months(config.getEarlyRetirementAge())))
@@ -119,14 +129,15 @@ def historical_scenarios(reference : Config):
         config.setValue(Config.GENERAL_INFLATION, inflation)
         
         Output.add_result(Output.SCENARIO_NAME,f"Historical Simulation: {years[0]}")
-        start_single_simulation(config, years[0]) 
+        Output.add_result(Output.HISTORICAL_YEARS,years[0])
+        start_single_simulation(config) 
         Output.next_scenario()
         
            
     
-def start_single_simulation(config: Config, historical_year: int = None) :
+def start_single_simulation(config: Config) :
     simulation = Simulation()
-    data = simulation.init(config, historical_year)
+    data = simulation.init(config)
     Output.add_result(Output.DESCRIPTION,f"Age: {config.getEarlyRetirementAge() : .2f} Ratio: {data.get_lumpsum_ratio()*100: .2f}%")
     simulation.run(data, config)
     

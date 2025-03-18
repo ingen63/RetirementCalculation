@@ -1,7 +1,6 @@
 
 from abc import ABC
 import logging
-import time
 from data import Data
 from output import Output
 from property import Property, PropertyManager
@@ -59,34 +58,7 @@ class StartSimulationEvent(Event):
         data.set_threshold_months(round(config.getValue(Config.REALESTATE_THRESHOLDYEARS, Config.DEFAULT_REALESTATE_THRESHOLDYEARS)*Config.MONTHS))
         
         return True
-      
-class EndSimulationEvent(Event):
     
-    
-    def __init__(self, month):
-        super().__init__(month)
-        self.__ms = time.time()*1000
-    
-    def get_name(self) -> str :
-        return "EndSimulationEvent"
-       
-    def after_method(self, config, data) -> bool:
-        
-        Output.add_result(Output.AVERAGE_PERFORMANCE, f"{data.yearly_average_performance()*100:.2f} %")
-        Output.add_result(Output.AVERAGE_INFLATION, f"{data.yearly_average_inflation()*100:.2f} %")
-        
-        if (data.get_historical_year() is not None) :
-            year = data.get_historical_year()
-            Output.add_inflation_ranking(year, data.yearly_average_inflation())
-            Output.add_performance_ranking(year, data.yearly_average_performance())
-            Output.add_wealth_ranking(year, data.get_wealth())
-            Output.add_total_assests_ranking(year, data.get_total_assets())
-        
-        self.__ms = time.time()*1000 - self.__ms
-        logging.info(f"Finished simulation after {self.__ms} ms")
-        return True
-        
-
 
 class ChangeValueEvent(Event):
      

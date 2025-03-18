@@ -227,13 +227,6 @@ class Data:
     def get_actual_age(self) -> float:
         return self.__actual_age
         
-    def get_historical_year(self) -> int:
-        return self.__historical_year
-    
-    def set_historical_year(self, value : int):
-        if value is not None :
-            self.__historical_year = int(value)
-        
     def get_change_value_event(self) -> set:
         return self.__change_value_events.keys()
     

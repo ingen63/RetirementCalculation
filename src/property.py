@@ -288,7 +288,7 @@ class PropertyManager :
         data.set_wealth(data.get_wealth() + property.get_worth() - mortage - tax) 
         logging.info (f"Sell {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Worth: {property.get_worth() : 7.0f} CHF Profit: {profit-tax:7.0f} CHF")
         Output.add_result(Output.SELL_PROPERTY, f"Age: {data.get_actual_age():.2f}", f"{Output.SELL_PROPERTY[1]} {property.get_name()}")
-        Output.add_sell_ranking(data.get_historical_year(), property.get_name(), data.get_actual_age())
+        Output.add_sell_ranking(property.get_name(), data.get_actual_age())
         
         return True
         

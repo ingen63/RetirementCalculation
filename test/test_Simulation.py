@@ -41,7 +41,7 @@ def test_init(config):
     
     simulation = Simulation()
     
-    data = simulation.init(config)
+    simulation.init(config)
     
     
     events = EventHandler.get_events(config.age2months(50))
@@ -68,9 +68,6 @@ def test_init(config):
     assert events[1].get_name() == "LegalRetirementEvent"
     assert events[0].get_name() == f"ChangeValueEvent {Config.MONEYFLOWS_SPENDINGS}"
     
-    events = EventHandler.get_events(data.get_end_simulation_month())  
-    assert len(events) == 1
-    assert events[0].get_name() == "EndSimulationEvent"
     
     
 

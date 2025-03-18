@@ -35,16 +35,19 @@ class Output :
     WEALTH_LEGAL = [54,"Wealth (Legal)"]
     WEALTH = [55,"Wealth"]
     TOTAL_ASSETS = [56,"Total Assets"]
+    
+    HISTORICAL_YEARS = [-1,"Historical Years"]
         
     output = {}
     scenario = 1
-    
+ 
     ranking = {}
     
     @staticmethod
     def reset() :
         Output.output = {}
         Output.ranking = {}
+
         Output.scenario = 1
     
     @staticmethod
@@ -52,8 +55,7 @@ class Output :
         Output.scenario += 1
         for key in Output.output.keys() :
             Output.output[key].append("")
-        
-        
+          
     @staticmethod    
     def add_result(type : list, value : str, key : str = None ) :
         if key is None :
@@ -64,27 +66,14 @@ class Output :
         Output.output[key][Output.scenario] = value
  
     @staticmethod
-    def print(index :list) :
-        
+    def print(index :list) :  
         sorted_output = dict(sorted(Output.output.items(), key=lambda item: item[1][0][0]))
         for key in sorted_output.keys():
-            print(f"{key :<25s}", end=",")
-            for i in index:
-                print(f"{sorted_output[key][i] :>28s}", end=",")
-            print()
-            
-            
-    @staticmethod
-    def print_selected(years : list) :
-      
-        index = []
-        for year in years :
-            filter = f"Historical Simulation: {year}"
-            for i in range(1, Output.scenario+1) :
-                name = Output.output[Output.SCENARIO_NAME[1]][i]
-                if name == filter :
-                    index.append(i)
-        Output.print(index)
+            if (sorted_output[key][0][0] > 0) :
+                print(f"{key :<25s}", end=",")
+                for i in index:
+                    print(f"{sorted_output[key][i] :>28s}", end=",")
+                print()
             
             
             
@@ -96,31 +85,31 @@ class Output :
         return Output.output[Output.SCENARIO_NAME[1]][Output.scenario]
     
     @staticmethod
-    def add_inflation_ranking(year : int, inflation : float) :
-        Output.add_ranking(Output.AVERAGE_INFLATION[1], year, inflation*100)
+    def add_inflation_ranking(inflation : float) :
+        Output.add_ranking(Output.AVERAGE_INFLATION[1], inflation*100)
 
 
     @staticmethod
-    def add_performance_ranking(year : int, performance : float) :
-          Output.add_ranking(Output.AVERAGE_PERFORMANCE[1], year, performance*100)
+    def add_performance_ranking(performance : float) :
+          Output.add_ranking(Output.AVERAGE_PERFORMANCE[1], performance*100)
         
     @staticmethod
-    def add_sell_ranking(year : int, name: str, age : float) :
-        Output.add_ranking(f"{Output.SELL_PROPERTY[1]} {name}", year, age) 
+    def add_sell_ranking(name: str, age : float) :
+        Output.add_ranking(f"{Output.SELL_PROPERTY[1]} {name}", age) 
         
     @staticmethod
-    def add_wealth_ranking(year : int, wealth : float) :
-          Output.add_ranking(Output.WEALTH[1], year, wealth)
+    def add_wealth_ranking(wealth : float) :
+          Output.add_ranking(Output.WEALTH[1], wealth)
     
     @staticmethod
-    def add_total_assests_ranking(year : int, total_asset : float) :
-          Output.add_ranking(Output.TOTAL_ASSETS[1], year, total_asset)
+    def add_total_assests_ranking(total_asset : float) :
+          Output.add_ranking(Output.TOTAL_ASSETS[1], total_asset)
         
     @staticmethod
-    def add_ranking(type : str, year: int, value : float) :
+    def add_ranking(type : str, value : float) :
         if Output.ranking.get(type) is None :
             Output.ranking[type] = {}
-        Output.ranking[type][year] = value
+        Output.ranking[type][Output.scenario] = value
         
     @staticmethod
     def print_ranking() :
@@ -139,18 +128,20 @@ class Output :
             logging.warning(f"No ranking for type {type} available.") 
             return [[],[]]
         
-        years = list(dict(sorted(Output.ranking[type].items(), key=lambda item: item[1], reverse=order_reverse)).keys())
+        scenarios = list(dict(sorted(Output.ranking[type].items(), key=lambda item: item[1], reverse=order_reverse)).keys())
          
-        if len(years) < 2*places :       
+        if len(scenarios) < 2*places :       
             logging.warn(f"Not enough data for type {type} available, to present the best and worst {places} values.") 
-            return [[],[]]
+            if places == 1 :
+                return [[],[]]
+            return Output.get_best_and_worth(type,places-1, order_reverse)
 
         best_years = []
         worst_years = []
-        for i in reversed(range(len(years)-places, len(years))): 
-            worst_years.append(years[i])
+        for i in reversed(range(len(scenarios)-places, len(scenarios))): 
+            worst_years.append(scenarios[i])
         for i in range(places) :
-            best_years.append(years[i])
+            best_years.append(scenarios[i])
         return [best_years, worst_years] 
            
     @staticmethod    
@@ -175,7 +166,8 @@ class Output :
         return s
         
     def __ranking_key_value(key: str, value: float) -> str :
-        s =  str(key)+":"
+        year = Output.output[Output.HISTORICAL_YEARS[1]][key]
+        s =  str(year)+":"
         if (value == Output.NEVER) :
             s += f"{'---':>12s}, "
         else :

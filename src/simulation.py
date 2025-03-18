@@ -2,7 +2,7 @@
 import logging
 import time
 from data import Data
-from event import BuyPropertyEvent, ChangeValueEvent, EarlyRetirmentEvent, EndSimulationEvent, EventHandler, LegalRetirmentEvent, MoneyFlowExtraEvent, RenewMortageEvent, RentPropertyEvent, SellPropertyEvent, StartSimulationEvent
+from event import BuyPropertyEvent, ChangeValueEvent, EarlyRetirmentEvent, EventHandler, LegalRetirmentEvent, MoneyFlowExtraEvent, RenewMortageEvent, RentPropertyEvent, SellPropertyEvent, StartSimulationEvent
 from config import Config
 from output import Output
 from property import Property, PropertyManager
@@ -11,14 +11,14 @@ from tax import TaxHandler
 
 class Simulation :
     
-    output = Output()
 
     def   init(self, config : Config,  historical_year: int = None) -> Data :
+        
+        self.start_time = time.time()*1000
         
         EventHandler.reset_events()
         PropertyManager.reset()
         data = Data(config.getStartAge(), config.getEndAge(), config.getStartMonth())
-        data.set_historical_year(historical_year)
 
         EventHandler.add_event(StartSimulationEvent(config.getStartMonth()))
 
@@ -33,7 +33,7 @@ class Simulation :
             else :
                 data.set_value(key, config.best_guess_for_number(values)) 
                 
-        values = config.getValue(Config.MONEYFLOWS_EXTRA)
+        values = config.getValue(Config.MONEYFLOWS_EXTRA,0.0)
         if (isinstance(values,dict)) :
             for age in values.keys():
                 change_event_month = config.getStartMonth() if config.best_guess_for_number(age) < data.get_start_age() else config.age2months(age)
@@ -67,16 +67,13 @@ class Simulation :
         for property in PropertyManager.get_properties(Property.PLANNED_FOR_RENT) :
             if (property.get_buy_age() is not None) :
                 EventHandler.add_event(RentPropertyEvent(config.age2months(property.get_buy_age()), property))
-
-        EventHandler.add_event(EndSimulationEvent(config.getEndMonth()))
         
         EventHandler.init(config, data)
         
-        if (data.get_historical_year() is not None) :
-            for property in PropertyManager.get_properties(Property.OWNED) :
-                Output.add_sell_ranking(data.get_historical_year(), property.get_name(),Output.NEVER)
-            for property in PropertyManager.get_properties(Property.PLANNED):
-                Output.add_sell_ranking(data.get_historical_year(), property.get_name(), Output.NEVER)
+        for property in PropertyManager.get_properties(Property.OWNED) :
+            Output.add_sell_ranking(property.get_name(),Output.NEVER)
+        for property in PropertyManager.get_properties(Property.PLANNED):
+            Output.add_sell_ranking(property.get_name(), Output.NEVER)
 
         return data
 
@@ -94,9 +91,6 @@ class Simulation :
         actual_month = data.get_actual_month()
         end_months = data.get_end_simulation_month()
 
-        start_time = time.time()*1000.0
-        
-
         for month in range(actual_month, end_months+1):
             data.set_actual_month(month)
             EventHandler.before(month, config, data)
@@ -104,23 +98,17 @@ class Simulation :
             wealth_trend = self.__one_month(month, data, config)
             
             EventHandler.after(month, config, data)
-            new_wealth = data.get_wealth()
-            projected_wealth = new_wealth + wealth_trend*data.get_threshold_months()
+            
+            projected_wealth = data.get_wealth() + wealth_trend*data.get_threshold_months()
             if (projected_wealth <= 0.0) :
                 if PropertyManager.nothing_to_sell() is False:
-                    logging.info(f"Need to sell properties with age {data.get_actual_age()}")
+                    logging.info(f"Need to sell properties with age {data.get_actual_age() : .2f}. {data.get_threshold_months()}-Month Wealthtrend: {wealth_trend : ,.0f} CHF Wealth: {data.get_wealth() : ,.0f} CHF ")
                     EventHandler.add_event(SellPropertyEvent(month+1, PropertyManager.get_property_for_sale()))
-            if (new_wealth <= 0.0) :
+            if (data.get_wealth() <= 0.0) :
                 logging.info(f"Simulation finished with age {data.get_actual_age()} with no money left.")
                 break
         
-        end_time = time.time()*1000.0   
-        logging.info(f"Simulation finished after {end_time - start_time} ms")
-        logging.getLogger(Config.LOGGER_SUMMARY).info(f"Simulation finished at age of {data.get_actual_age()} with wealth of {data.get_wealth() : .0f}")
-        
-        Output.add_result(Output.TIME_TO_GO, f"{data.get_actual_age():.2f}")
-        Output.add_result(Output.REMAINING_WEALTH,f"{data.get_wealth():,.0f} CHF")
-        Output.add_result(Output.TOTAL_ASSETS,f"{data.get_total_assets():,.0f} CHF")
+        self.end_simulation(data)
     
     def __one_month(self, month : int, data : Data, config : Config) :
         
@@ -128,23 +116,17 @@ class Simulation :
             data.push_inflation() # push inflation to history for later inflation corrections
             data.push_performance() # push performance to history for later performance corrections
             
-        # adjust spendigs accodording to inflation
+        # adjust spendigs acccording to inflation
         spending = data.get_spending()
         spending *= (1.0 + data.get_inflation())**((month % Config.MONTHS)/Config.MONTHS)
-        
-        income = data.get_income()
-                 
-        legal_pension = data.get_legal_pension()
-        if month % Config.MONTHS == 0 : # Legal pension is adjusted once a year for inflation       
-            legal_pension *= (1.0 + data.get_inflation())
-        
-        private_pension = data.get_private_pension()
-        monthly_performance = ((1.0 + data.get_performance())**(1.0/Config.MONTHS)) - 1
-            
-        yearly_income = data.get_yearly_income() + private_pension   + legal_pension  + income
         total_deductions =  spending + PropertyManager.get_properties_expenses()
-          
-        total_income = private_pension + legal_pension + income
+            
+        legal_pension = data.get_legal_pension()        
+        private_pension = data.get_private_pension()        
+        total_income = private_pension + legal_pension + data.get_income()   
+        yearly_income = data.get_yearly_income() + total_income
+        
+        monthly_performance = ((1.0 + data.get_performance())**(1.0/Config.MONTHS)) - 1
         wealth_trend = total_income - total_deductions + data.get_wealth()*monthly_performance
             
         wealth = data.get_wealth() + data.get_savings() + total_income - total_deductions
@@ -159,10 +141,10 @@ class Simulation :
             wealth -=  (capital_tax + income_tax)
             yearly_income = 0.0 # reset income for the next year
             
-                           
-
+            # Legal pension is adjusted once a year for inflation       
+            legal_pension *= (1.0 + data.get_inflation())
        
-            logging.info(f"Age: {data.get_actual_age():5.2f}, Wealth: {wealth:7.0f} CHF, Total Income: {data.get_actual_income() :6.0f} CHF, Total Expenses: {total_deductions : 6.0f} CHF, Performance: {data.get_performance()*100 : 5.2f} % Inflation: {data.get_inflation()*100 : 5.2f}")
+            logging.info(f"Age: {data.get_actual_age():5.2f}, Wealth: {wealth:7,.0f} CHF, Total Income: {data.get_actual_income() :6,.0f} CHF, Total Expenses: {total_deductions : 6,.0f} CHF, Performance: {data.get_performance()*100 : 5.2f} % Inflation: {data.get_inflation()*100 : 5.2f}")
            
             
         data.set_wealth(wealth)
@@ -171,4 +153,21 @@ class Simulation :
         data.set_yearly_income(yearly_income)
         
         return wealth_trend
+    
+    def end_simulation(self, data : Data) :
+        
+        Output.add_result(Output.TIME_TO_GO, f"{data.get_actual_age():.2f}")
+        Output.add_result(Output.REMAINING_WEALTH,f"{data.get_wealth():,.0f} CHF")
+        Output.add_result(Output.TOTAL_ASSETS,f"{data.get_total_assets():,.0f} CHF")
+        Output.add_result(Output.AVERAGE_PERFORMANCE, f"{data.yearly_average_performance()*100:.2f} %")
+        Output.add_result(Output.AVERAGE_INFLATION, f"{data.yearly_average_inflation()*100:.2f} %")
+        
+        Output.add_inflation_ranking(data.yearly_average_inflation())
+        Output.add_performance_ranking(data.yearly_average_performance())
+        Output.add_wealth_ranking(data.get_wealth())
+        Output.add_total_assests_ranking(data.get_total_assets())
+        
+        duration = time.time()*1000 - self.start_time
+        logging.info(f"Finished simulation after {duration : .2f} ms")
+        
    
