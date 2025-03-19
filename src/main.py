@@ -71,7 +71,7 @@ def scenarios(config : Config, overrides : str):
         Output.add_result(Output.HISTORICAL_YEARS,scenario[Config.CALCULATION_SCENARIOS_NAME])
         start_single_simulation(scenarion_config) 
         Output.next_scenario()
-        print("------------------------------------------------------------------------------------------------")
+   
         
 def historical_scenarios(reference : Config, overrides : str):
     config = reference.clone()
@@ -140,6 +140,8 @@ def start_single_simulation(config: Config) :
     data = simulation.init(config)
     Output.add_result(Output.DESCRIPTION,f"Age: {config.getEarlyRetirementAge() : .2f} Ratio: {data.get_lumpsum_ratio()*100: .2f}%")
     simulation.run(data, config)
+    
+    print("------------------------------------------------------------------------------------------------")
     
     
 def override(config : Config, overrides : str) :

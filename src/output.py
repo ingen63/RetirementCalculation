@@ -6,8 +6,8 @@ class Output :
     
     NEVER = 1000
     
-    SCENARIO_NAME = [0,"Scenario:"]
-    DESCRIPTION = [1,"Description:"]
+    SCENARIO_NAME = [1,"Scenario:"]
+    DESCRIPTION = [2,"Description:"]
  
  
     EARLY_RETIREMENT_AGE = [1,"Early Retirement:"]

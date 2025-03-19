@@ -51,6 +51,8 @@ class Config:
     REALESTATE_AFFORDABILITY_FIXCOSTS = "RealEstate.Affordability.FixCosts"
     REALESTATE_PROPERTIES = "RealEstate.Properties"
 
+    ITERATIONS = "Iterations"
+    
     CALCULATION = "Calculation"
     CALCULATION_METHOD = "Calculation.Method"
     CALCULATION_SINGLE = "Calculation.Single"
