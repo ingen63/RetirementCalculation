@@ -51,43 +51,47 @@ def test_get_name():
 
 def test_add_ranking() :
     Output.reset()
-    Output.add_ranking(Output.TOTAL_ASSETS[1], 2021, 10000)
-    assert Output.ranking[Output.TOTAL_ASSETS[1]][2021] == 10000
+    Output.add_ranking(Output.TOTAL_ASSETS,"2000", 10000)
+    assert Output.ranking[Output.TOTAL_ASSETS[1]][0] == 10000
     
-    Output.add_ranking(Output.TOTAL_ASSETS[1], 2022, 12000)
-    assert Output.ranking[Output.TOTAL_ASSETS[1]][2021] == 10000
-    assert Output.ranking[Output.TOTAL_ASSETS[1]][2022] == 12000
+    Output.next_scenario()
+    Output.add_ranking(Output.TOTAL_ASSETS, "2001", 12000)
+    assert Output.ranking[Output.TOTAL_ASSETS[1]][0] == 10000
+    assert Output.ranking[Output.TOTAL_ASSETS[1]][1] == 12000
     
 def test_get_best_and_worth() :
+    test = [0,"Test"]
+    set_rankings(test,range(0,10), [0] * 10)
+    assert Output.get_best_and_worth(test, 3) == [ [0, 1, 2], [9, 8, 7] ]
+    assert Output.get_best_and_worth(test, 3, False) == [ [0, 1, 2], [9, 8, 7] ]
     
-    set_rankings("Test",range(0,10), [0] * 10)
-    assert Output.get_best_and_worth("Test", 3) == [ [0, 1, 2], [9, 8, 7] ]
-    assert Output.get_best_and_worth("Test", 3, False) == [ [0, 1, 2], [9, 8, 7] ]
+    set_rankings(test,range(0,10), range(0,10))
     
-    set_rankings("Test",range(0,10), range(0,10))
+    assert Output.get_best_and_worth([1,"Unknown"], 1) == [[],[]]
     
-    assert Output.get_best_and_worth("Unknown", 1) == [[],[]]
+    assert Output.get_best_and_worth(test, 1) == [[9], [0]]
+    assert Output.get_best_and_worth(test, 2) == [[9, 8], [0, 1]]
+    assert Output.get_best_and_worth(test, 3) == [[9, 8, 7], [0, 1, 2]]
+    assert Output.get_best_and_worth(test, 3, False) == [ [0, 1, 2], [9, 8, 7]]
     
-    assert Output.get_best_and_worth("Test", 1) == [[9], [0]]
-    assert Output.get_best_and_worth("Test", 2) == [[9, 8], [0, 1]]
-    assert Output.get_best_and_worth("Test", 3) == [[9, 8, 7], [0, 1, 2]]
-    assert Output.get_best_and_worth("Test", 3, False) == [ [0, 1, 2], [9, 8, 7]]
+    set_rankings(test,range(0,10), list(reversed(range(50,55))) + list(reversed(range(100,105))))
     
-    set_rankings("Test",range(0,10), list(reversed(range(50,55))) + list(reversed(range(100,105))))
+    assert Output.get_best_and_worth(test, 3) == [ [5, 6, 7], [4, 3, 2] ]
     
-    assert Output.get_best_and_worth("Test", 3) == [ [5, 6, 7], [4, 3, 2] ]
-    
-    assert Output.get_best_and_worth("Test", 3, False) == [ [4, 3, 2], [5, 6, 7] ]
+    assert Output.get_best_and_worth(test, 3, False) == [ [4, 3, 2], [5, 6, 7] ]
     
     
 def test_print_best_and_worth():
-    set_rankings("Test",range(2000,2010), list(reversed(range(50,55))) + list(reversed(range(100,105))))
-    s = Output.best_and_worth_string("Test", 3) 
+    test = [0,"Test"]
+       
+    set_rankings(test,range(2000,2010), list(reversed(range(50,55))) + list(reversed(range(100,105))))
+    s = Output.best_and_worth_string(test, 3) 
     print(s)  
         
     
-def set_rankings(type : str, years : list, values : list) -> list[int] :
+def set_rankings(type : list, years : list, values : list) -> list[int] :
     Output.reset()
-    for i in range(len(years)) :
+    for i in range(len(values)) :
         Output.add_ranking(type, years[i], float(values[i]))
+        Output.next_scenario()
     

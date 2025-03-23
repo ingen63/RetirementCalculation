@@ -11,9 +11,7 @@ class Config:
     GENERAL_STARTAGE = "General.StartAge"
     GENERAL_STARTMONTH = "General.StartMonth"
     GENERAL_ENDAGE = "General.EndAge"
-    GENERAL_WEALTH = "General.Wealth"
     GENERAL_INFLATION = "General.Inflation"
-    GENERAL_PERFORMANCE = "General.Performance"
     
     TAXES_TAXRATE = "Taxes.TaxRate"
     TAXES_INCOME = "Taxes.Income"
@@ -52,6 +50,21 @@ class Config:
     REALESTATE_PROPERTIES = "RealEstate.Properties"
 
     ITERATIONS = "Iterations"
+    
+    WEALTHMANGEMENT = "WealthManagement"
+    WEALTHMANGEMENT_WEALTH = "WealthManagement.Wealth"
+    WEALTHMANAGEMENT_PORTFOLIOBALANCE = "WealthManagement.PortfolioBalance"
+    WEALTHMANAGEMENT_STOCKPERFORMANCE = "WealthManagement.StockPerformance"
+    WEALTHMANAGEMENT_BONDPERFORMANCE = "WealthManagement.BondPerformance"
+    WEALTHMANAGEMENT_INFLATION = "WealthManagement.Inflation"
+    WEALTHMANAGEMENT_HISTORICALYEAR = "WealthManagement.HistoricalYear"
+    WEALTHMANAGEMENT_HISTORICALDATA = "WealthManagement.HistoricalData"
+    WEALTHMANAGEMENT_EXTRAPOLATION = "WealthManagement.Extrapolation"
+    WEALTHMANAGEMENT_AVERAGERANGE = "WealthManagement.AverageRange"
+    
+    DEFAULT_WEALTHMANAGEMENT_EXTRAPOLATION = "MovingAverage"
+    DEFAULT_WEALTHMANAGEMENT_AVERAGERANGE = 30
+    
     
     CALCULATION = "Calculation"
     CALCULATION_METHOD = "Calculation.Method"
@@ -414,7 +427,7 @@ class Config:
                 if decimal is None or decimal == "0":
                    return int(number)
                 else:
-                    return float(value)
+                    return round(float(value),10)
             except ValueError:
                 return value
         except (ValueError, AttributeError):
@@ -429,7 +442,7 @@ class Config:
     
     def month2age(self, month) -> float:
         months_since_start = month - self.getStartMonth()
-        return self.getStartAge() + months_since_start/Config.MONTHS
+        return round(self.getStartAge() + months_since_start/Config.MONTHS,10)
          
     def list_available_keys(self, data : dict, prefix : str) -> list:
         keys = []

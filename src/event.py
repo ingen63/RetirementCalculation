@@ -40,26 +40,22 @@ class StartSimulationEvent(Event):
     
     def before_method(self, config: Config, data : Data) -> bool:
         
-        # calculate initial wealth
-        data.set_wealth(config.getValue(Config.GENERAL_WEALTH,0.0))
+        data.set_wealth(config.getValue(Config.WEALTHMANGEMENT_WEALTH,0.0))
+        data.set_savings(config.getActualValue(self.get_month(), Config.MONEYFLOWS_SAVINGS,0.0))   
         
-        # calculate initial private pension capital
         data.set_pk_capital(config.getValue(Config.PENSION_PRIVATE_CAPITAL,0.0))
-
-        
-        # calculate initial savings
         data.set_pk_contribution(config.getActualValue(self.get_month(), Config.PENSION_PRIVATE_CONTRIBUTION,0.0))
         
-        data.set_savings(config.getActualValue(self.get_month(), Config.MONEYFLOWS_SAVINGS,0.0))
-        data.set_inflation(config.getActualValue(self.get_month(), Config.GENERAL_INFLATION,0.0))
-        
-        data.set_performance(config.getActualValue(self.get_month(), Config.GENERAL_PERFORMANCE,0.0))
+        data.set_portfolio_balance(config.getActualValue(self.get_month(), Config.WEALTHMANAGEMENT_PORTFOLIOBALANCE))
+        data.set_stock_performance(config.getActualValue(self.get_month(), Config.WEALTHMANAGEMENT_STOCKPERFORMANCE,0.0))
+        data.set_bond_performance(config.getActualValue(self.get_month(), Config.WEALTHMANAGEMENT_BONDPERFORMANCE,0.0))
+        data.set_inflation(config.getActualValue(self.get_month(), Config.WEALTHMANAGEMENT_INFLATION,0.0))
         
         data.set_threshold_months(round(config.getValue(Config.REALESTATE_THRESHOLDYEARS, Config.DEFAULT_REALESTATE_THRESHOLDYEARS)*Config.MONTHS))
         
         return True
     
-
+         
 class ChangeValueEvent(Event):
      
     def get_name(self) -> str :

@@ -149,16 +149,16 @@ class Property :
         self.__inflation_correction = inflation_correction
         
     def get_buy_age(self) -> float :
-        return self.__buy_age
+        return round(self.__buy_age,10)
     
     def set_buy_age(self, buy_age : float) :
-        self.__buy_age = buy_age
+        self.__buy_age = round(buy_age,10)
         
     def get_sell_age(self) -> float :
-        return self.__sell_age
+        return round(self.__sell_age,10)
         
     def set_sell_age(self, sell_age : float) :
-         self.__sell_age = sell_age
+         self.__sell_age = round(sell_age,10)
     
     def get_mortage(self) -> Mortage :
         return self.__mortage

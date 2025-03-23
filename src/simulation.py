@@ -4,6 +4,7 @@ import time
 from data import Data
 from event import BuyPropertyEvent, ChangeValueEvent, EarlyRetirmentEvent, EventHandler, LegalRetirmentEvent, MoneyFlowExtraEvent, RenewMortageEvent, RentPropertyEvent, SellPropertyEvent, StartSimulationEvent
 from config import Config
+from historical import HistoricalData
 from output import Output
 from property import Property, PropertyManager
 from tax import TaxHandler
@@ -21,6 +22,14 @@ class Simulation :
         data = Data(config.getStartAge(), config.getEndAge(), config.getStartMonth())
 
         EventHandler.add_event(StartSimulationEvent(config.getStartMonth()))
+        historical_year = config.getValue(Config.WEALTHMANAGEMENT_HISTORICALYEAR)
+        if (historical_year is not None) :
+            if HistoricalData.is_loaded() is False :
+                HistoricalData.load(config.getValue(Config.WEALTHMANAGEMENT_HISTORICALDATA))
+
+            historical_data = HistoricalData(config)
+            historical_data.setValues(historical_year, config, data)
+            
 
         # create all change events
         keys = data.get_change_value_event()
@@ -95,14 +104,14 @@ class Simulation :
             data.set_actual_month(month)
             EventHandler.before(month, config, data)
             
-            wealth_trend = self.__one_month(month, data, config)
+            self.__one_month(month, data, config)
             
             EventHandler.after(month, config, data)
             
-            projected_wealth = data.get_wealth() + wealth_trend*data.get_threshold_months()
-            if (projected_wealth <= 0.0) :
+            if data.time_to_sell() is True :
                 if PropertyManager.nothing_to_sell() is False:
-                    logging.info(f"Need to sell properties with age {data.get_actual_age() : .2f}. {data.get_threshold_months()}-Month Wealthtrend: {wealth_trend : ,.0f} CHF Wealth: {data.get_wealth() : ,.0f} CHF ")
+                    wealth_trend = data.get_wealth() + data.get_threshold_months()*(data.get_fixed_income() - data.get_spending())
+                    logging.info(f"Need to sell properties with age {data.get_actual_age() : .2f}. {data.get_threshold_months()}-Month Wealth Forecaste: {wealth_trend : ,.0f} CHF Wealth: {data.get_wealth() : ,.0f} CHF ")
                     EventHandler.add_event(SellPropertyEvent(month+1, PropertyManager.get_property_for_sale()))
             if (data.get_wealth() <= 0.0) :
                 logging.info(f"Simulation finished with age {data.get_actual_age()} with no money left.")
@@ -127,7 +136,7 @@ class Simulation :
         yearly_income = data.get_yearly_income() + total_income
         
         monthly_performance = ((1.0 + data.get_performance())**(1.0/Config.MONTHS)) - 1
-        wealth_trend = total_income - total_deductions + data.get_wealth()*monthly_performance
+
             
         wealth = data.get_wealth() + data.get_savings() + total_income - total_deductions
         wealth *=  (1.0 + monthly_performance)
@@ -151,8 +160,7 @@ class Simulation :
         data.set_pk_capital(pk_capital)
         data.set_legal_pension(legal_pension)
         data.set_yearly_income(yearly_income)
-        
-        return wealth_trend
+
     
     def end_simulation(self, data : Data) :
         

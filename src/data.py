@@ -6,8 +6,6 @@ from config import Config
 class Data:
     
     __change_value_events = {
-            Config.TAXES_INCOME : "income_taxrate",
-            Config.TAXES_CAPITAL : "capital_taxrate",
 
             Config.PENSION_PRIVATE_CONTRIBUTION : "pk_contribution",
             Config.PENSION_PRIVATE_INTEREST : "pk_interest",
@@ -16,8 +14,10 @@ class Data:
             Config.MONEYFLOWS_SAVINGS : "savings",
             Config.MONEYFLOWS_SPENDINGS : "spending",          
                         
-            Config.GENERAL_PERFORMANCE : "performance",
-            Config.GENERAL_INFLATION : "inflation"
+            Config.WEALTHMANAGEMENT_STOCKPERFORMANCE : "stock_performance",
+            Config.WEALTHMANAGEMENT_BONDPERFORMANCE : "bond_performance",
+            Config.WEALTHMANAGEMENT_INFLATION : "inflation",
+            Config.WEALTHMANAGEMENT_PORTFOLIOBALANCE : "portfolio_balance"
         }
     
     
@@ -34,10 +34,10 @@ class Data:
         
         self._threshold_months = 0.0
         
-        self.__performance = 0.0
+        self.__portfolio_balance = 1.0
+        self.__stock_performance = 0.0
+        self.__bond_performance = 0.0
         self.__inflation = 0.0
-        self.__income_taxrate = 0.0
-        self.__capital_taxrate = 0.0
         
         self.__pk_capital = 0.0
         self.__pk_contribution = 0.0
@@ -61,7 +61,7 @@ class Data:
         self.__end_age = end_age
         self.__actual_age = start_age
         
-        self.__historical_year = None
+
         
         self._total_assets = 0.0
         
@@ -112,33 +112,30 @@ class Data:
         value = 0.0 if (value is None) else value
         self.__legal_pension = value
     
+    def set_portfolio_balance(self, value : float) :
+        value = 1.0 if (value is None) else value
+        self.__portfolio_balance = value
+    
     def get_performance(self) -> float:
-        return self.__performance
+        balance = self.__portfolio_balance
+        return balance * self.__stock_performance +  self.__bond_performance * (1.0 - balance)
     
-    def set_performance(self, value : float):
+    
+    def set_stock_performance(self, value : float) :
         value = 0.0 if (value is None) else value
-        self.__performance = value
+        self.__stock_performance = value
+        
+    def set_bond_performance(self, value : float) :
+        value = 0.0 if (value is None) else value
+        self.__bond_performance = value
     
+        
     def get_inflation(self) -> float:
         return self.__inflation
     
     def set_inflation(self, value : float):
         value = 0.0 if (value is None) else value
         self.__inflation = value
-    
-    def get_income_taxrate(self) -> float:
-        return self.__income_taxrate
-    
-    def set_income_taxrate(self, value : float):
-        value = 0.0 if (value is None) else value
-        self.__income_taxrate = value
-    
-    def get_capital_taxrate(self) -> float:
-        return self.__capital_taxrate
-    
-    def set_capital_taxrate(self, value : float):
-        value = 0.0 if (value is None) else value
-        self.__capital_taxrate = value
     
     def get_pk_capital(self) -> float:
         return self.__pk_capital
@@ -219,27 +216,31 @@ class Data:
         return self.__end_simulation_month
         
     def get_start_age(self) -> int:
-        return self.__start_age
+        return round(self.__start_age,10)
  
     def get_end_age(self) -> int:
-        return self.__end_age
+        return round(self.__end_age,10)
     
     def get_actual_age(self) -> float:
-        return self.__actual_age
+        return round(self.__actual_age, 10)
         
     def get_change_value_event(self) -> set:
         return self.__change_value_events.keys()
     
     
     def time_to_sell(self) -> bool:
-        wealth = self.get_wealth() - self.get_threshold_months()*self.get_spending()
+        
+        wealth = self.get_wealth() + self.get_threshold_months()*(self.get_fixed_income() - self.get_spending())
         if (wealth < 0.0):
             return True
         return False
     
+    def get_fixed_income(self) -> float :
+        return self.get_private_pension() + self.get_legal_pension() + self.get_income()
+        
     def get_actual_income(self) -> float: 
-        income = self.get_private_pension() + self.get_legal_pension() + self.get_income()
-        income += self.get_wealth() * self.get_performance()/Config.MONTHS
+        income = self.get_fixed_income()
+        income += self.get_wealth() * ((1+self.get_performance())**(1.0/Config.MONTHS) - 1.0)
         return income
     
     def get_total_assets(self) -> float:
