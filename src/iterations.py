@@ -1,16 +1,46 @@
+from itertools import product
 import logging
 import re
 
 from config import Config
+from output import Output
+from simulation import Simulation
 
 class Iterations :
     
     def __init__(self):
         self.iterations = {}
    
-    def parse_iterations(self, config): 
-        self.iterations = {}
+   
+   
+    def iterate(self, reference : Config, overrides : str) :
+         
+        keys = self.iterations.keys()
+        values = self.iterations.values()
+         
+        for kombination in product(*values) : 
+            config = reference.clone()
+            config.replace_variables()
+            config.override(overrides)
+            description = ""
+            for key, value in zip(keys,kombination) :
+                config.setValue(key, value)
+                value = round(value,2) if isinstance(value, float) else value
+                description = description + f"{key}:{value} "
+                
+            simulation = Simulation()
+            data = simulation.init(config)
+            Output.add_result(Output.DESCRIPTION,description)
+            
+            simulation.run(data, config)
+    
+            print("------------------------------------------------------------------------------------------------")   
+            
         
+        
+    def parse_iterations(self, config): 
+        
+        self.iterations = {}
         input = config.getValue(Config.ITERATIONS) 
         if input is None :
             return

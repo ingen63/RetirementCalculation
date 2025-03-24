@@ -37,7 +37,15 @@ def test_parse_iteratons() :
     iterations.parse_iterations(config)
     assert iterations.get_iterations() == {"Test1": [1, 2, 10 , 11]}
     
-    config.setValue(Config.ITERATIONS, { "Test1" : [1 , 2], "Test2" : [ "(10 ... 11, 1)" ] })
+    config.setValue(Config.ITERATIONS, { "Test1" : [1 , 2], "Test2" : [ "(10.0 ... 11.0, 0.5)" ] })
     iterations.parse_iterations(config)
-    assert iterations.get_iterations() == {"Test1": [1, 2], "Test2" : [10 , 11]}
+    assert iterations.get_iterations() == {"Test1": [1, 2], "Test2" : [10, 10.5 , 11]}
+    
+    config.setValue(Config.ITERATIONS, { "Test1" : ["(1 ... 2,1)"], "Test2" : [ "(10.0 ... 11.0, 0.5)" ] })
+    iterations.parse_iterations(config)
+    assert iterations.get_iterations() == {"Test1": [1, 2], "Test2" : [10, 10.5 , 11]}
+    
+    config.setValue(Config.ITERATIONS, { "Pension.EarlyRetirement" : ["(62.0 ... 63.5, 0.5)"], "WealthManagement.HistoricalYear":  ["(1985 ... 1987, 1)"]})
+    iterations.parse_iterations(config)
+    assert iterations.get_iterations() == { "Pension.EarlyRetirement" : [62.0, 62.5, 63, 63.5], "WealthManagement.HistoricalYear":  [1985, 1986, 1987]}
     

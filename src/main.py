@@ -4,6 +4,7 @@ import argparse
 import time
 from config import Config
 from historical import HistoricalData
+from iterations import Iterations
 from output import Output
 from simulation import Simulation
 
@@ -22,20 +23,18 @@ def main(file : str, log_level : int, overrides : str) :
         file = "./data/config.json"
     config = Config().load(file)
 
-    
-    if config.getValue(Config.CALCULATION_METHOD) == "Single":
+   
+    if config.getValue(Config.ITERATIONS) is None:
         config.replace_variables()
-        override(config, overrides)
+        config.override(overrides)
         Output.add_result(Output.SCENARIO_NAME,"Single simulation")
         
-        start_single_simulation(config)
+        start_single_simulation(config) 
+    else :
+        iterations = Iterations()
+        iterations.parse_iterations(config)
+        iterations.iterate(config, overrides)
         
-    elif config.getValue(Config.CALCULATION_METHOD) == "Scenarios":
-        scenarios(config, overrides)
-    elif config.getValue(Config.CALCULATION_METHOD) == "Historical" :
-        historical_scenarios(config, overrides)
-    else:
-        logging.error(f"Unsupported calculation method '{config.getValue(Config.CALCULATION_METHOD)}'")
         
         
     print(" ------------------------------------------------------------------------------------------------")
@@ -57,27 +56,13 @@ def main(file : str, log_level : int, overrides : str) :
     else:
         logging.info(f"Overall execution time {duration/1000:.2f} sec")
     
-def scenarios(config : Config, overrides : str): 
-    
-    scenarios = config.getValue(Config.CALCULATION_SCENARIOS)
-    for scenario in scenarios: 
-        scenarion_config = config.clone()
-        scenarion_config.setValues(scenario[Config.CALCULATION_SCENARIOS_PARAMETERS])
-        
-        scenarion_config.replace_variables()
-        override(scenarion_config, overrides)
-        
-        Output.add_result(Output.SCENARIO_NAME,scenario[Config.CALCULATION_SCENARIOS_NAME])
-        Output.add_result(Output.HISTORICAL_YEARS,scenario[Config.CALCULATION_SCENARIOS_NAME])
-        start_single_simulation(scenarion_config) 
-        Output.next_scenario()
    
         
 def historical_scenarios(reference : Config, overrides : str):
     config = reference.clone()
     
     config.replace_variables()
-    override(config, overrides)
+    config.override(overrides)
     
     
     config.setValue(Config.GENERAL_STARTAGE, config.getValue(Config.CALCULATION_HISTORICAL_STARTAGE,config.getEarlyRetirementAge()))
@@ -144,17 +129,6 @@ def start_single_simulation(config: Config) :
     print("------------------------------------------------------------------------------------------------")
     
     
-def override(config : Config, overrides : str) :
-    if (overrides is None) :
-        return
-    keys = overrides.split(',')
-    for key in keys:
-        key, value = key.split(':')
-        
-        if config.exists(key) :
-            # try to convert it to int or float
-            old_value = config.setValue(key, value)
-            logging.info(f"Overriding value '{old_value}' for '{key}' with '{value}'")
             
             
 def intialize_logging(log_level : int,):

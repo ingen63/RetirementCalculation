@@ -1,5 +1,6 @@
 import json
 import copy
+import logging
 import re
 
 
@@ -447,6 +448,18 @@ class Config:
     def month2age(self, month) -> float:
         months_since_start = month - self.getStartMonth()
         return round(self.getStartAge() + months_since_start/Config.MONTHS,10)
+    
+    def override(self, overrides : str) :
+        if (overrides is None) :
+            return
+        keys = overrides.split(',')
+        for key in keys:
+            key, value = key.split(':')
+            
+            if self.exists(key) :
+                # try to convert it to int or float
+                old_value = self.setValue(key, value)
+                logging.info(f"Overriding value '{old_value}' for '{key}' with '{value}'")  
          
     def list_available_keys(self, data : dict, prefix : str) -> list:
         keys = []

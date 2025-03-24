@@ -1,7 +1,7 @@
 {
     "Iterations" : {
         "Pension.EarlyRetirement" : [60, "(62.0 ... 64.5, 0.5)"],
-        "WealthManagement.HistoricalYear":  ["(1914 ... 2025, 1"]
+        "WealthManagement.HistoricalYear":  ["(1985 ... 2024, 1)"]
     },
    
     "General": {
@@ -46,8 +46,8 @@
         "StockPerformance": 0.06,
         "BondPerformance": 0.02,
         "Inflation": 0.02,
-        "HistoricalYear" : 1995,
-        "HistoricalData": "./data/HistoricalData.csv",
+        "_HistoricalYear" : 1995,
+        "HistoricalData": "./data/MSCI.csv",
         "Extrapolation" : "Weighted Average",
         "AverageRange": 25
     },
