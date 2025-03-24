@@ -117,7 +117,7 @@ class LumpsumEvent(Event):
         data.set_lumpsum(lumpsum)
         data.set_wealth(data.get_wealth()+data.get_lumpsum())
         ratio = config.getActualValue(self.get_month(),Config.PENSION_PRIVATE_LUMPSUMRATIO)
-        logging.info (f"Lumpsum --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Lumpsum: {lumpsum : 7.0f} CHF Lumpsum Ratio: {ratio*100 : 5.2f} %")
+        logging.info (f"Lumpsum --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7,.0f} CHF Lumpsum: {lumpsum : 7,.0f} CHF Lumpsum Ratio: {ratio*100 : 5.2f} %")
         return True
 
     def after_method(self, config, data):
@@ -160,7 +160,7 @@ class EarlyRetirmentEvent(Event) :
         pk_capital = data.get_pk_capital()
         self.__private_pension(config, data)
  
-        logging.info (f"Early Retirement --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Capital: {pk_capital : 7.0f} CHF Severance Pay: {data.get_extra():7.0f} CHF  Private Pension: {data.get_private_pension():6.0f} CHF")
+        logging.info (f"Early Retirement --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7,.0f} CHF Capital: {pk_capital : 7,.0f} CHF Severance Pay: {data.get_extra():7,.0f} CHF  Private Pension: {data.get_private_pension():6,.0f} CHF")
         
         Output.add_result(Output.WEALTH_EARLY, f"{data.get_wealth():,.0f} CHF")
         return True

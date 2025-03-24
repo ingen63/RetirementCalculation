@@ -134,18 +134,18 @@ class Output :
                 print(Output.best_and_worth_string(key,3,True))
     
     @staticmethod       
-    def get_best_and_worth(type : list = None, places : int = 1, order_reverse : bool = True):
+    def get_best_and_worth(type : str = None, places : int = 1, order_reverse : bool = True):
         if type is None :
             type =  Output.TOTAL_ASSETS
         
-        if Output.ranking.get(type[1]) is None :
+        if Output.ranking.get(type) is None :
             logging.warning(f"No ranking for type {type} available.") 
             return [[],[]]
         
-        scenarios = list(dict(sorted(Output.ranking[type[1]].items(), key=lambda item: item[1], reverse=order_reverse)).keys())
+        scenarios = list(dict(sorted(Output.ranking[type].items(), key=lambda item: item[1], reverse=order_reverse)).keys())
          
         if len(scenarios) < 2*places :       
-            logging.warn(f"Not enough data for type {type[1]} available, to present the best and worst {places} values.") 
+            logging.warn(f"Not enough data for type {type} available, to present the best and worst {places} values.") 
             if places == 1 :
                 return [[],[]]
             return Output.get_best_and_worth(type,places-1, order_reverse)
@@ -159,16 +159,16 @@ class Output :
         return [best_years, worst_years] 
            
     @staticmethod    
-    def best_and_worth_string(type : list, places : int = 3, order_reverse : bool = True) -> str : 
+    def best_and_worth_string(type : str, places : int = 3, order_reverse : bool = True) -> str : 
         
-        rankings = Output.ranking.get(type[1])
+        rankings = Output.ranking.get(type)
         if rankings is None :
             logging.warning(f"No ranking for type {type} available.") 
             return ""
                 
         [best,worst] = Output.get_best_and_worth(type, places, order_reverse)
         
-        s = f"{type[1] :<20s}:  Worst years ("
+        s = f"{type :<20s}:  Worst years ("
         for key in worst :
             s += Output.__ranking_key_value(key, rankings[key])
                 

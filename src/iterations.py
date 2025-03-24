@@ -14,29 +14,40 @@ class Iterations :
    
    
     def iterate(self, reference : Config, overrides : str) :
-         
-        keys = self.iterations.keys()
-        values = self.iterations.values()
-         
-        for kombination in product(*values) : 
+        
+        if reference.getValue(Config.ITERATIONS) is None :
             config = reference.clone()
             config.replace_variables()
             config.override(overrides)
-            description = ""
-            for key, value in zip(keys,kombination) :
-                config.setValue(key, value)
-                value = round(value,2) if isinstance(value, float) else value
-                description = description + f"{key}:{value} "
-                
-            simulation = Simulation()
-            data = simulation.init(config)
-            Output.add_result(Output.DESCRIPTION,description)
+            description = "Single Run"
+            self.simulate(config, description)
+        else :
+            keys = self.iterations.keys()
+            values = self.iterations.values()
             
-            simulation.run(data, config)
-    
-            print("------------------------------------------------------------------------------------------------")   
+            for kombination in product(*values) : 
+                config = reference.clone()
+                config.replace_variables()
+                config.override(overrides)
+                description = ""
+                for key, value in zip(keys,kombination) :
+                    config.setValue(key, value)
+                    value = round(value,2) if isinstance(value, float) else value
+                    description = description + f"{key}:{value} "
+                self.simulate(config, description)
+                       
+        print("------------------------------------------------------------------------------------------------")   
             
+       
+    def simulate(self, config : Config, description : str) :
+        simulation = Simulation()
+        data = simulation.init(config)
+        Output.add_result(Output.DESCRIPTION,description)
+        Output.add_result(Output.SCENARIO_NAME,description)
+            
+        simulation.run(data, config)
         
+        Output.next_scenario()    
         
     def parse_iterations(self, config): 
         
