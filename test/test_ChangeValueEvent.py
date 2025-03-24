@@ -11,12 +11,9 @@ def config():
 
     return config
 
-@pytest.fixture
-def data():
-    return Data(Config.DEFAULT_STARTAGE,Config.DEFAULT_STARTAGE+Config.DEFAULT_MAXPERIOD, Config.DEFAULT_STARTMONTH)
 
-
-def test_change_value_event_before_method(config, data):
+def test_change_value_event_before_method(config):
+    data = Data(config)
     # Arrange
     test_value = 0.01
     config.setValue(Config.WEALTHMANAGEMENT_STOCKPERFORMANCE, test_value)
@@ -29,7 +26,8 @@ def test_change_value_event_before_method(config, data):
     # Assert
     assert data.get_performance() == test_value
     
-def test_change_value_event_data_before_start(config, data):
+def test_change_value_event_data_before_start(config):
+    data = Data(config)
     # Arrange
     test_value = {"40" : 0.04, "60" : 0.061}
     config.setValue( Config.WEALTHMANAGEMENT_STOCKPERFORMANCE, test_value)
@@ -43,7 +41,8 @@ def test_change_value_event_data_before_start(config, data):
     event61.before_method(config, data) 
     assert data.get_performance() == 0.061
 
-def test_change_value_event_nonexistent_key(config, data):
+def test_change_value_event_nonexistent_key(config):
+    data = Data(config)
     # Arrange
     test_key = "NonExistent.Key"
     event = ChangeValueEvent(0, test_key)

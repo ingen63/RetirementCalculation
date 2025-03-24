@@ -52,18 +52,25 @@ def test_getActualValue(config):
     config.setValue(Config.GENERAL_STARTMONTH, 1)
     config.setValue(Config.GENERAL_STARTAGE, 50)
     config.setValue("Test.Branch.Float", 1.2)
-    config.setValue("Test.Branch.Dict", {"50" : 5000, "60.1" : 6000, "70" : 7000})
+    config.setValue("Test.Branch.Dict", {"50" : 5000, "51": 5100,"60.1" : 6010, "70" : 7000})
     
-    assert config.getActualValue((50-50)*12+1, "Test.Branch.Float") == 1.2
-    assert config.getActualValue((50-50)*12+1, "Test.Branch.Dict") == 5000
-    assert config.getActualValue((51-50)*12+1, "Test.Branch.Dict") == 5000
-    assert config.getActualValue((40-50)*12+1, "Test.Branch.Dict") is None
-    assert config.getActualValue((40-50)*12+1, "Test.Branch.Dict", 21.0) == 21.0
-    assert config.getActualValue((60-50)*12+1, "Test.Branch.Dict", 21.0) == 5000
-    assert config.getActualValue((60.1-50)*12+1, "Test.Branch.Dict", 21.0) == 6000
-    assert config.getActualValue((70-50)*12+1, "Test.Branch.Dict", 21.0) == 7000  
-    assert config.getActualValue((80-50)*12+1, "Test.Branch.Dict") == 7000
-    assert config.getActualValue((90-50)*12+1, "Test.Branch.Unknonw") is None
+    
+    
+    assert config.getActualValue(config.age2months(40), "Test.Branch.Float") == 1.2
+    assert config.getActualValue(config.age2months(50), "Test.Branch.Float") == 1.2
+    assert config.getActualValue(config.age2months(80), "Test.Branch.Float") == 1.2
+    
+    
+    assert config.getActualValue(config.age2months(40), "Test.Branch.Dict") is None
+    assert config.getActualValue(config.age2months(50), "Test.Branch.Dict") == 5000                                 
+    assert config.getActualValue(config.age2months(50+11.49/12), "Test.Branch.Dict") == 5000
+    assert config.getActualValue(config.age2months(51), "Test.Branch.Dict") == 5100 
+    assert config.getActualValue(config.age2months(60.0), "Test.Branch.Dict") == 5100 
+    assert config.getActualValue(config.age2months(60.1), "Test.Branch.Dict") == 6010
+    assert config.getActualValue(config.age2months(70), "Test.Branch.Dict") == 7000   
+    assert config.getActualValue(config.age2months(80), "Test.Branch.Dict") == 7000
+
+
 
 def test_setValue(config):
     
@@ -122,6 +129,19 @@ def test_dump(config):
     
     config.dump_data()
     
+def test_age2month(config) :
+    config.setValue(Config.GENERAL_STARTAGE,50)
+    config.setValue(Config.GENERAL_STARTMONTH, 1)
+    
+    
+    assert config.age2months(50) == 1
+    assert config.age2months(51) == 13
+    assert config.age2months(52) == 25
+    for i in range(1,12) :
+        assert config.age2months(50+i/12) == i+1
+        assert config.age2months(50+(i+0.4999)/12) == i+1
+        assert config.age2months(50+(i-0.4999)/12) == i+1
+               
     
 def test_age_and_month(config):
     

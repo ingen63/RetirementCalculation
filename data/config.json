@@ -46,10 +46,10 @@
         "StockPerformance": 0.06,
         "BondPerformance": 0.02,
         "Inflation": 0.02,
-        "_HistoricalYear" : 1995,
+        "HistoricalYear" : 1995,
         "HistoricalData": "./data/HistoricalData.csv",
         "Extrapolation" : "Weighted Average",
-        "AverageRange": 20
+        "AverageRange": 25
     },
 
     "RealEstate": {

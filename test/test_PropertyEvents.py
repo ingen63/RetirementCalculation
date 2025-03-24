@@ -23,7 +23,7 @@ def test_SellPropertyEvent(config : Config):
     PropertyManager.add_property(Property(Config({"Name": "Owned House2B", "SellAge" : 52, "Price": 450000, "Status" : "Owned"})))   
     PropertyManager.add_property(Property(Config({"Name": "Owned House3", "SellAge" : 54, "Price":  600000, "Status" : "Owned"})))
     
-    data = Data(config.getStartAge(), config.getEndAge())
+    data = Data(config)
     
     properties = PropertyManager.get_properties(Property.OWNED)
    

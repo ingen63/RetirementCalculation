@@ -7,21 +7,20 @@ from event import ChangeValueEvent, EarlyRetirmentEvent, EventHandler, MoneyFlow
 @pytest.fixture
 def config():
     config = Config()
+    config.setValue(Config.GENERAL_STARTMONTH, 0)
     return config
 
-@pytest.fixture
-def data():
-    return Data(0,10)
 
 
-def test_early_retirement_event(config, data):
+
+def test_early_retirement_event(config):
 
     age = 60
     month = config.age2months(age)
     config.setValue(Config.PENSION_EARLYRETIREMENT, age)
-
     
-    data = Data(config.getStartMonth(), config.getEndMonth())
+    
+    data = Data(config)
 
     config.setValue(Config.PENSION_PRIVATE,{
                 "Capital": 1000,

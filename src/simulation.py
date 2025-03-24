@@ -19,7 +19,7 @@ class Simulation :
         
         EventHandler.reset_events()
         PropertyManager.reset()
-        data = Data(config.getStartAge(), config.getEndAge(), config.getStartMonth())
+        data = Data(config)
 
         EventHandler.add_event(StartSimulationEvent(config.getStartMonth()))
         historical_year = config.getValue(Config.WEALTHMANAGEMENT_HISTORICALYEAR)

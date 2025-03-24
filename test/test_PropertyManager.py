@@ -172,7 +172,7 @@ def test_sell_property(config : Config):
     property2 = Property(Config({"Name": "Owned House2", "Price": 200000, "Status" : "Owned"}))
     property3 = Property(Config({"Name": "Owned House3", "Price": 300000, "Status" : "Owned"}))
     
-    data = Data(config.getStartAge(), config.getEndAge())
+    data = Data(config)
 
     # Act
     PropertyManager.add_property(property1)
@@ -206,7 +206,7 @@ def test_sell_property(config : Config):
 def test_new_mortage(config : Config):  
     # Arrange
 
-    data = Data(config.getStartAge(), config.getEndAge())
+    data = Data(config)
     data.set_wealth(0.0)
     data.set_legal_pension(10)
     data.set_private_pension(10)

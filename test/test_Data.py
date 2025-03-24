@@ -19,7 +19,7 @@ def test_set_value(config):
     config.setValue(Config.MONEYFLOWS_SPENDINGS, {50 : 500, 60 : 600})
     config.setValue(Config.PENSION_PRIVATE_CONTRIBUTION, {50 : 5000, 60 : 6000})
     
-    data = Data(config.getStartAge(), config.getEndAge())
+    data = Data(config)
     
 
     assert data.get_spending() == 0.0
@@ -45,7 +45,7 @@ def test_set_value(config):
     
 def test_time_to_sell(config) :
     
-    data = Data(config.getStartAge(), config.getEndAge())
+    data = Data(config)
     data.set_threshold_months(10)
 
     assert data.time_to_sell() is False
@@ -64,7 +64,9 @@ def test_time_to_sell(config) :
     
 def test_inflation_correction(config) :
     
-    data = Data(0,10)
+    config.setValue(Config.GENERAL_STARTAGE,0)
+    config.setValue(Config.GENERAL_ENDAGE,10)
+    data = Data(config)
     
     data.set_inflation(0.0)
     
@@ -75,7 +77,7 @@ def test_inflation_correction(config) :
     data.push_inflation()
     assert data.get_inflation_correction() == 1.0
     
-    data = Data(0,10)
+    data = Data(config)
     data.set_inflation(0.1)
     data.push_inflation()
     assert data.get_inflation_correction() == 1.1
@@ -84,7 +86,7 @@ def test_inflation_correction(config) :
     assert round(data.get_inflation_correction(),6) == 1.331000
     
         
-    data = Data(0,10)
+    data = Data(config)
     data.set_inflation(0.1)
     data.push_inflation()
     data.set_inflation(0.2)

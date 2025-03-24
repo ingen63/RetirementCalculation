@@ -16,7 +16,7 @@ def config():
 def test_Amortization(config):
     # Arrange
     
-    data = Data(config.getStartAge(), config.getEndAge())
+    data = Data(config)
     data.set_wealth(0.0)
     data.set_legal_pension(10)
     data.set_private_pension(10)

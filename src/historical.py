@@ -98,7 +98,7 @@ class HistoricalData :
     
     def extrapolate(self, start_year :int, end_year : int, data : list[float], value : float) -> list[float] :
 
-        historical_data = data[self.get_index(start_year) : -1 ]
+        historical_data = data[self.get_index(start_year) : ]
         
         if self.extrapolation == "Fixed" :
             return historical_data + self.extrapolate_values(end_year, [value] * self.average_range, self.fixed)

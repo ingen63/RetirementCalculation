@@ -25,7 +25,7 @@ class Data:
 
     
     
-    def __init__(self, start_age : float, end_age : float, start_month  : int = Config.DEFAULT_STARTMONTH ) :
+    def __init__(self, config : Config ) :
         self.__wealth = 0.0
         self.__spending = 0.0
         self.__income = 0.0
@@ -54,14 +54,13 @@ class Data:
         self.__inflation_history = []
         self.__performance_history = []
         
-        self.__start_simulation_month = start_month
-        self.__actual_month = start_month
-        self.__end_simulation_month = start_month + round((end_age - start_age)*Config.MONTHS)
-        self.__start_age = start_age
-        self.__end_age = end_age
-        self.__actual_age = start_age
+        self.__start_simulation_month = config.getStartMonth()
+        self.__actual_month = self.__start_simulation_month
         
-
+        self.__start_age = config.getStartAge()
+        self.__end_age = config.getEndAge()
+        self.__actual_age = self.__start_age
+        self.__end_simulation_month = config.age2months(self.__end_age)
         
         self._total_assets = 0.0
         

@@ -62,7 +62,11 @@ class Config:
     WEALTHMANAGEMENT_EXTRAPOLATION = "WealthManagement.Extrapolation"
     WEALTHMANAGEMENT_AVERAGERANGE = "WealthManagement.AverageRange"
     
-    DEFAULT_WEALTHMANAGEMENT_EXTRAPOLATION = "MovingAverage"
+    EXTRAPOLATION_FIXED = "Fixed"
+    EXTRAPOLATION_WEIGHTED_AVERAGE = "Weighted Average"
+    EXTRAPOLATION_AVERAGE = "Average"
+    
+    DEFAULT_WEALTHMANAGEMENT_EXTRAPOLATION = EXTRAPOLATION_FIXED
     DEFAULT_WEALTHMANAGEMENT_AVERAGERANGE = 30
     
     
@@ -437,7 +441,7 @@ class Config:
     
     
     def age2months(self, age) -> int:
-        years_since_start = self.best_guess_for_number(age) - self.getStartAge()
+        years_since_start = self.best_guess_for_number(age) - self.getStartAge()  
         return self.getStartMonth() + round(years_since_start*Config.MONTHS)
     
     def month2age(self, month) -> float:
