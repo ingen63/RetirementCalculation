@@ -41,7 +41,7 @@ class Config:
     MONEYFLOWS_EXTRA = "MoneyFlows.Extra"
     
     REALESTATE = "RealEstate"
-    REALESTATE_THRESHOLDYEARS = "RealEstate.ThresholdYears"
+    REALESTATE_THRESHOLDMONTHS = "RealEstate.ThresholdMonths"
     REALESTATE_BUYAFTERSELL = "RealEstate.BuyAfterSell"
     REALESTATE_AFFORDABILITY = "RealEstate.Affordability"
     REALESTATE_AFFORDABILITY_SUSTAINABILITY = "RealEstate.Affordability.Sustainability"

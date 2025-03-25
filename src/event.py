@@ -51,8 +51,6 @@ class StartSimulationEvent(Event):
         data.set_bond_performance(config.getActualValue(self.get_month(), Config.WEALTHMANAGEMENT_BONDPERFORMANCE,0.0))
         data.set_inflation(config.getActualValue(self.get_month(), Config.WEALTHMANAGEMENT_INFLATION,0.0))
         
-        data.set_threshold_months(round(config.getValue(Config.REALESTATE_THRESHOLDYEARS, Config.DEFAULT_REALESTATE_THRESHOLDYEARS)*Config.MONTHS))
-        
         return True
     
          
@@ -332,7 +330,7 @@ class EventHandler() :
         return EventHandler.__events.get(month,[])
     
     @staticmethod
-    def reset_events():
+    def reset():
         EventHandler.__events = {}
        
     @staticmethod    

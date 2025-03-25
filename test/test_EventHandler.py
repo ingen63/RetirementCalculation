@@ -5,7 +5,7 @@ from event import EventHandler, Event
 
 
 def test_get_events_empty_month():
-    EventHandler.reset_events()  # Reset events dictionary
+    EventHandler.reset()  # Reset events dictionary
     test_month = 7
     
     result = EventHandler.get_events(test_month)
@@ -15,7 +15,7 @@ def test_get_events_empty_month():
 
 
 def test_get_events_with_events():
-    EventHandler.reset_events()  # Reset events dictionary
+    EventHandler.reset()  # Reset events dictionary
     test_month = 3
     event1 = Event(test_month)
     event2 = Event(test_month)
@@ -30,7 +30,7 @@ def test_get_events_with_events():
     assert result[1] == event2
 
 def test_add_event():
-    EventHandler.reset_events()  # Reset events dictionary
+    EventHandler.reset()  # Reset events dictionary
     test_month = 5
     test_event = Event(test_month)
     
@@ -46,7 +46,7 @@ def test_add_event():
     assert EventHandler.get_events(test_month)[1] == test_event
 
 def test_add_multiple_events_to_same_month():
-    EventHandler.reset_events()  # Reset events dictionary
+    EventHandler.reset()  # Reset events dictionary
     test_month = 10
     event1 = Event(test_month)
     event2 = Event(test_month)
@@ -59,7 +59,7 @@ def test_add_multiple_events_to_same_month():
     assert EventHandler.get_events(test_month)[1] == event2
 
 def test_add_event_maintains_order():
-    EventHandler.reset_events()  # Reset events dictionary
+    EventHandler.reset()  # Reset events dictionary
     test_month = 15
     event1 = Event(test_month)
     event2 = Event(test_month)

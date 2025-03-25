@@ -1,9 +1,9 @@
 {
-    "_Iterations" : {
-        "Pension.EarlyRetirement" : [60, "(62.0 ... 64.5, 0.5)"],
+    "Iterations" : {
+        "Pension.EarlyRetirement" : ["(62.25 ... 63.25, 0.5)"],
         "WealthManagement.HistoricalYear":  ["(1985 ... 2024, 1)"]
     },
-   
+
     "General": {
         "StartAge": 62.0,
         "StartMonth" : 3,
@@ -19,11 +19,11 @@
     },
 
     "Pension": {
-        "EarlyRetirement" : 64.5,
+        "EarlyRetirement" : 62.25,
         "LegalRetirement" : 65,
         "Private": {
             "Capital": 1564618.46,
-            "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.65},
+            "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.5, "63.75" : 0.5},
             "ConversionRate": 0.0408, 
             "Contribution":  {"50": 4554.0 },
             "Interest": {"56.75": 0.035, "57.75" : 0.03, "58.75" : 0.095, "59.75" : 0.07, "60.75" : 0.09,  "61.75" : 0.09,  "62.75" : 0.025, "63.75" : 0.01}
@@ -35,7 +35,7 @@
         "Savings":  {"{General.StartAge}": 1000.0, "{Pension.EarlyRetirement}": 0.0},
         "Income": {"{General.StartAge}": 9880.00, "{Pension.EarlyRetirement}" : 0.0},
         "Spendings": {"{General.StartAge}" : 9230.0, "65.0" : 7270.0},
-        "Extra": {"{Pension.EarlyRetirement}": 88600.0}, 
+        "___Extra": {"{Pension.EarlyRetirement}": 88600.0}, 
         "__Extra": {"63" : -95000, "65" : -30000, "{Pension.EarlyRetirement}": 88600.0}, 
         "_Extra": {"63" : -95000, "65" : -30000} 
     },
@@ -46,14 +46,14 @@
         "StockPerformance": 0.06,
         "BondPerformance": 0.02,
         "Inflation": 0.02,
-        "HistoricalYear" : 2006,
+        "HistoricalYear" : 1988,
         "HistoricalData": "./data/MSCI.csv",
         "Extrapolation" : "Weighted Average",
         "AverageRange": 25
     },
 
     "RealEstate": {
-        "ThresholdYears" : 2,
+        "ThresholdMonths" : {"{General.StartAge}": 6, "{Pension.LegalRetirement}": 24},
         "BuyAfterSell": "True",
         "Affordability": { 
             "Sustainability": 0.33, 

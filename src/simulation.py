@@ -17,19 +17,22 @@ class Simulation :
         
         self.start_time = time.time()*1000
         
-        EventHandler.reset_events()
+        EventHandler.reset()
         PropertyManager.reset()
         data = Data(config)
 
         EventHandler.add_event(StartSimulationEvent(config.getStartMonth()))
         historical_year = config.getValue(Config.WEALTHMANAGEMENT_HISTORICALYEAR)
-        if (historical_year is not None) :
+        if (historical_year is  None or isinstance(historical_year,str) ) :
+            Output.add_result(Output.HISTORICAL_YEAR, "---") 
+        else :
             if HistoricalData.is_loaded() is False :
                 HistoricalData.load(config.getValue(Config.WEALTHMANAGEMENT_HISTORICALDATA))
 
             historical_data = HistoricalData(config)
             historical_data.setValues(historical_year, config, data)
-            
+            Output.add_result(Output.HISTORICAL_YEAR,f"{historical_year}")
+
 
         # create all change events
         keys = data.get_change_value_event()
@@ -153,7 +156,7 @@ class Simulation :
             # Legal pension is adjusted once a year for inflation       
             legal_pension *= (1.0 + data.get_inflation())
        
-            logging.info(f"Age: {data.get_actual_age():5.2f}, Wealth: {wealth:7,.0f} CHF, Total Income: {data.get_actual_income() :6,.0f} CHF, Total Expenses: {total_deductions : 6,.0f} CHF, Performance: {data.get_performance()*100 : 5.2f} % Inflation: {data.get_inflation()*100 : 5.2f}")
+            logging.info(f"Age: {data.get_actual_age():5.2f}, Wealth: {wealth:7,.0f} CHF, Fixed Income : {data.get_fixed_income() : 6,.0f} Total Income: {data.get_actual_income() :6,.0f} CHF, Total Expenses: {total_deductions : 6,.0f} CHF, Performance: {data.get_performance()*100 : 5.2f} % Inflation: {data.get_inflation()*100 : 5.2f}")
            
             
         data.set_wealth(wealth)

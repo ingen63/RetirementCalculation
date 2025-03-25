@@ -17,7 +17,9 @@ class Data:
             Config.WEALTHMANAGEMENT_STOCKPERFORMANCE : "stock_performance",
             Config.WEALTHMANAGEMENT_BONDPERFORMANCE : "bond_performance",
             Config.WEALTHMANAGEMENT_INFLATION : "inflation",
-            Config.WEALTHMANAGEMENT_PORTFOLIOBALANCE : "portfolio_balance"
+            Config.WEALTHMANAGEMENT_PORTFOLIOBALANCE : "portfolio_balance",
+            
+            Config.REALESTATE_THRESHOLDMONTHS : "threshold_months"
         }
     
     
