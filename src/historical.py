@@ -50,7 +50,7 @@ class HistoricalData :
         bond_performance = self.get_bond_performance(start_year, end_year)
         inflation_rates =self.get_inflation_rates(start_year, end_year)
         
-        start_age = config.month2age(1)
+        start_age = config.month2age(1)  # all values are changed and aopplied at begin of the year
         config.setValue(Config.WEALTHMANAGEMENT_STOCKPERFORMANCE, self.to_dict(start_age,stock_performance ))
         config.setValue(Config.WEALTHMANAGEMENT_BONDPERFORMANCE, self.to_dict(start_age, bond_performance))
         config.setValue(Config.WEALTHMANAGEMENT_INFLATION, self.to_dict(start_age, inflation_rates))

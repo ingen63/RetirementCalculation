@@ -4,7 +4,7 @@ import logging
 
 class Output :
     
-    NEVER = -1
+    NEVER = 1000
     
     SCENARIO_NAME = [-11,"Scenario:"]
     DESCRIPTION = [-12,"Description:"]
@@ -20,7 +20,7 @@ class Output :
     WITHDRAWAL_RATE = [13,"Withdrawal Rate:"]
     
     PENSION = [15,"Pension:", "CHF"]
-    SPENDING = [16,"Spending", "CHF"]
+    SPENDING = [16,"Spending (Legal Age)", "CHF"]
     
     SELL_PROPERTY = [20,"Sell:"]
     BUY_PROPERTY = [20,"Buy:"]
@@ -32,8 +32,8 @@ class Output :
     START_AGE = [50,"Simulation Start:"]
     LEGAL_RETIREMENT_AGE = [51,"Legal Retirement:"]
     PK_CAPITAL = [52,"Pension Capital:"]
-    WEALTH_EARLY = [53,"Wealth (Early)"]
-    WEALTH_LEGAL = [54,"Wealth (Legal)"]
+    WEALTH_EARLY = [53,"Wealth (Early Age)"]
+    WEALTH_LEGAL = [54,"Wealth (Legal Age)"]
     WEALTH = [55,"Wealth"]
     TOTAL_ASSETS = [56,"Total Assets"]
     

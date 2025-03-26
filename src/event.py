@@ -203,7 +203,7 @@ class LegalRetirmentEvent(Event) :
         withdrawal_rate = Config.MONTHS * (data.get_spending() - (data.get_legal_pension() + data.get_private_pension())) / (profit + data.get_wealth())
         
         
-        logging.info (f"Legal Retirement --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF WithDraw Ratio: {withdrawal_rate*100.0 : 5.2f} % Pension: {data.get_private_pension()+ data.get_legal_pension():6.0f} CHF")
+        logging.info (f"Legal Retirement --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7,.0f} CHF WithDraw Ratio: {withdrawal_rate*100.0 : 5,.2f} % Pension: {data.get_private_pension()+ data.get_legal_pension():6,.0f} CHF")
         Output.add_result(Output.WITHDRAWAL_RATE, f"{withdrawal_rate*100.0:.2f} %")
 
         
@@ -285,11 +285,9 @@ class RenewMortageEvent(Event):
         property = PropertyManager.get_property(self.__id)
         if (property is not None):
             return_value =  PropertyManager.renew_mortage(property, data, config)
-            if (return_value is True) :
+            if (return_value is True and property.get_mortage() is not None) :
                 next_mortage_renewal_month =  config.age2months(data.get_actual_age()+property.get_mortage().get_term()) 
                 EventHandler.add_event(RenewMortageEvent(next_mortage_renewal_month, property))
-            else :  # renewal of mortage has failed, we have to sell the property
-                EventHandler.add_event(SellPropertyEvent(self.get_month()+1, property))
         return return_value
     
 class RentPropertyEvent(Event) : 

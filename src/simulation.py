@@ -116,7 +116,7 @@ class Simulation :
                     wealth_trend = data.get_wealth() + data.get_threshold_months()*(data.get_fixed_income() - data.get_spending())
                     logging.info(f"Need to sell properties with age {data.get_actual_age() : .2f}. {data.get_threshold_months()}-Month Wealth Forecaste: {wealth_trend : ,.0f} CHF Wealth: {data.get_wealth() : ,.0f} CHF ")
                     EventHandler.add_event(SellPropertyEvent(month+1, PropertyManager.get_property_for_sale()))
-            if (data.get_wealth() <= 0.0) :
+            if data.get_wealth() <= 0.0 and PropertyManager.nothing_to_sell() is True :
                 logging.info(f"Simulation finished with age {data.get_actual_age()} with no money left.")
                 break
         

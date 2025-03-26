@@ -105,7 +105,12 @@ class Property :
         self.set_status(property_config.getValue(Property.STATUS, Property.PLANNED))
         self.set_price(property_config.getValue(Property.PRICE,0.0))
         self.set_worth(property_config.getValue(Property.WORTH,self.get_price()))
-        self.set_inflation_correction(bool(property_config.getValue(Property.INFLATIONCORRECTION, False)))
+        inflation_correction = property_config.getValue(Property.INFLATIONCORRECTION) 
+        if (inflation_correction is None or str(inflation_correction).upper() == "FALSE") :
+            inflation_correction = False
+        else :
+            inflation_correction = True
+        self.set_inflation_correction(inflation_correction)
         self.set_buy_age(property_config.getValue(Property.BUYAGE,Config.MAX_AGE))
         self.set_sell_age(property_config.getValue(Property.SELLAGE, Config.MAX_AGE))
         self.set_rental_income(property_config.getValue(Property.RENTALINCOME,0.0))
@@ -286,7 +291,7 @@ class PropertyManager :
         tax  = TaxHandler.sales_tax(config, property) 
         
         data.set_wealth(data.get_wealth() + property.get_worth() - mortage - tax) 
-        logging.info (f"Sell {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Worth: {property.get_worth() : 7.0f} CHF Profit: {profit-tax:7.0f} CHF")
+        logging.info (f"Sell {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7,.0f} CHF Worth: {property.get_worth() : 7,.0f} CHF Profit: {profit-tax:7,.0f} CHF")
         Output.add_result(Output.SELL_PROPERTY, f"Age: {data.get_actual_age():.2f}", f"{Output.SELL_PROPERTY[1]} {property.get_name()}")
         Output.add_sell_ranking(property.get_name(), data.get_actual_age())
         
@@ -325,7 +330,7 @@ class PropertyManager :
             PropertyManager.add_expenses(property)
             data.set_wealth(new_wealth)
             
-        logging.info (f"Buy {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Price: {property.get_price() : 7.0f} CHF Mortage: {property.get_mortage().get_value():7.0f} CHF")
+        logging.info (f"Buy {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7,.0f} CHF Price: {property.get_price() : 7,.0f} CHF Mortage: {property.get_mortage().get_value():7,.0f} CHF")
         Output.add_result(Output.BUY_PROPERTY, f"Age: {data.get_actual_age():.2f}", f"{Output.BUY_PROPERTY[1]} {property.get_name()}")
   
         
@@ -340,19 +345,27 @@ class PropertyManager :
         new_mortage =  PropertyManager.mortage(property, data, config)
         
         if (new_mortage is None) :
-            logging.debug(f"Mortgage cant be renewed for {property.get_name()} due to lack of wealth and income.")
-            return False
+            old_mortage = property.get_mortage()
+            if (old_mortage is None) :
+                return True
+            property.set_mortage(None)
+            PropertyManager.add_expenses(property)
+            data.set_wealth(data.get_wealth() - old_mortage.get_value())
+            logging.info (f"Mortage fully amortized {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7,.0f} CHF Amortization: {old_mortage.get_value() : 7,.0f} CHF ")
         else :
             amortization = property.get_mortage().get_value() - new_mortage.get_value()
             property.set_mortage(new_mortage)
             PropertyManager.add_expenses(property)
             data.set_wealth(data.get_wealth() - amortization)
-            logging.info (f"Mortage {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Amortization: {amortization : 7.0f} CHF ")
+            logging.info (f"Mortage {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7,.0f} CHF Amortization: {amortization : 7,.0f} CHF ")
         return True
         
         
     @staticmethod
     def mortage(property : Property,  data : Data, config : Config) -> Mortage :
+        
+        if property.get_mortage() is None :   # no mortage on the property nothing to be done
+            return None
         
         new_mortage = copy.deepcopy(property.get_mortage())
         
@@ -388,7 +401,7 @@ class PropertyManager :
         
         property.set_status(Property.RENTED )
         PropertyManager.add_expenses(property)
-        logging.info (f"Rent {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Rent: {-1.0*property.get_rental_income() : 5.0f} CHF ")
+        logging.info (f"Rent {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7,.0f} CHF Rent: {-1.0*property.get_rental_income() : 5,.0f} CHF ")
         return True
 
     @staticmethod
@@ -398,7 +411,7 @@ class PropertyManager :
         for property in properties :
             property.set_status(Property.PLANNED_FOR_RENT)
             PropertyManager.remove_expenses(property)
-            logging.info (f"Canceled {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7.0f} CHF Rent: {-1.0*property.get_rental_income() : 5.0f} CHF ")
+            logging.info (f"Canceled {property.get_name()} --> Age: {data.get_actual_age():5.2f} Wealth: {data.get_wealth():7,.0f} CHF Rent: {-1.0*property.get_rental_income() : 5,.0f} CHF ")
             
         return True
     
@@ -409,7 +422,7 @@ class PropertyManager :
         interest = config.getValue(Config.REALESTATE_AFFORDABILITY_MORTAGEINTEREST, Mortage.DEFAULT_AFFORDABILITY_MORTAGEINTEREST)
         capital_contribution = config.getValue(Config.REALESTATE_AFFORDABILITY_CAPITALCONTRIBUTION, Mortage.DEFAULT_AFFORDABILITY_CAPITALCONTRIBUTION)
         fix_costs = property.get_fix_costs()*Config.MONTHS
-        mortage = property.get_mortage().get_value() if property.get_mortage() is not None else 0.0
+        actual_mortage = property.get_mortage().get_value() if property.get_mortage() is not None else 0.0
         
         wealth  = data.get_wealth()
         income = (data.get_legal_pension() + data.get_private_pension())*Config.MONTHS
@@ -423,8 +436,8 @@ class PropertyManager :
         new_wealth = wealth    
         new_max_mortage = 0.0
 
-        max_legal_mortage = property.get_price()*(1.0-Property.OWN_FUNDS)
-        requested_mortage = min(mortage, max_legal_mortage)  # the requested mortage must not exceed the legal limit of 80% of the property price
+        max_legal_mortage = property.get_worth()*(1.0-Property.OWN_FUNDS)
+        requested_mortage = min(actual_mortage, max_legal_mortage)  # the requested mortage must not exceed the legal limit of 80% of the property value
         i = 0
         while (True) :
             max_mortage = (sustanability * (income + new_wealth * capital_contribution) - fix_costs) / interest   
@@ -433,7 +446,7 @@ class PropertyManager :
                 return max_mortage
             
             if (renew) : 
-                amortization =  mortage - max_mortage # in CH you cant get more wealth by increasing ypur mortage
+                amortization =  actual_mortage - max_mortage # in CH you cant get more wealth by increasing ypur mortage
                 new_wealth = max(0, wealth - amortization)  # make sure not to go into negative wealth
             else :
                 new_wealth = max(0, wealth - (price - max_mortage))  # make sure not to go into negative wealth
