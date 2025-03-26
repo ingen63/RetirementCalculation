@@ -40,9 +40,9 @@ def main(file : str, log_level : int, overrides : str) :
     end_time = time.time()*1000
     duration = end_time - start_time
     if (duration < 1000) :
-        logging.info(f"Overall execution time {duration} ms")
+        print(f"Overall execution time {duration} ms")
     else:
-        logging.info(f"Overall execution time {duration/1000:.2f} sec")
+        print(f"Overall execution time {duration/1000:.2f} sec")
     
     
     

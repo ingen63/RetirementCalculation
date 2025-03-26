@@ -251,7 +251,7 @@ class Data:
     def push_inflation(self) :
         self.__inflation_history.append(self.get_inflation())
         
-    def get_inflation_correction(self) :
+    def get_inflation_correction(self) :        
         correction = 1.0
         for i in range(len(self.__inflation_history)):
             correction *= (1.0+self.__inflation_history[i])         
@@ -265,7 +265,7 @@ class Data:
     def push_performance(self) :
         self.__performance_history.append(self.get_performance())
         
-    def get_performance_correction(self) :
+    def get_performance_correction(self) :        
         correction = 1.0
         for i in range(len(self.__performance_history)):
             correction *= (1.0+self.__performance_history[i])

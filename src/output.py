@@ -6,7 +6,7 @@ class Output :
     
     NEVER = 1000
     
-    SCENARIO_NAME = [-11,"Scenario:"]
+    SCENARIO_NAME = [1000,"Scenario:"]
     DESCRIPTION = [-12,"Description:"]
  
  

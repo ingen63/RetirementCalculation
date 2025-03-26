@@ -29,6 +29,7 @@ class Iterations :
             for kombination in product(*values) : 
                 config = reference.clone()
 
+                sorting = 200
                 description = ""
                 scenario_name = "\""
                 for key, value in zip(keys,kombination) :
@@ -53,7 +54,7 @@ class Iterations :
         simulation = Simulation()
         data = simulation.init(config)
         Output.add_result(Output.DESCRIPTION,description)
-        Output.add_result(Output.SCENARIO_NAME,description)
+        Output.add_result(Output.SCENARIO_NAME,scenario_name)
             
         simulation.run(data, config)
         

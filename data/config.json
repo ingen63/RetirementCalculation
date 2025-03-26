@@ -1,7 +1,11 @@
 {
     "_Iterations" : {
-        "Pension.Private.LumpsumRatio" :  ["(0.5 ... 1, 0.05)"],
-        "WealthManagement.HistoricalYear":  ["(1970 ... 2024, 1)"]
+        "Pension.Private.LumpsumRatio" :  ["(0.5 ... 1.0, 0.05)"],
+        "WealthManagement.HistoricalYear":  ["(1988 ... 2024, 1)"],
+        "WealthManagement.PortfolioBalance" : ["(0.0 ... 1.0, 0.1)" ]
+    },
+    "__Iterations" : {
+        "WealthManagement.HistoricalYear":  ["(1988 ... 2024, 1)"]
     },
 
     "General": {
@@ -24,7 +28,7 @@
         "Private": {
             "Capital60" : 1128421.0,
             "Capital": 1499167.0,
-            "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.65, "62.75" : 0.0000000000005},
+            "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.65, "63.75" : 0.0000005},
             "ConversionRate": 0.0408, 
             "Contribution":  {"50": 4554.0 },
             "Interest": {"56.75": 0.035, "57.75" : 0.03, "58.75" : 0.095, "59.75" : 0.07, "60.75" : 0.09,  "61.75" : 0.09,  "62.75" : 0.05, "63.75" : 0.01}
@@ -45,14 +49,14 @@
         "StockPerformance": 0.06,
         "BondPerformance": 0.02,
         "Inflation": 0.01,
-        "HistoricalYear" : 1970,
+        "HistoricalYear" : 1988,
         "HistoricalData": "./data/MSCI.csv",
-        "Extrapolation" : "Average",
-        "AverageRange": 10
+        "Extrapolation" : "Weighted Average",
+        "AverageRange": 20
     },
 
     "RealEstate": {
-        "ThresholdMonths" : {"{General.StartAge}": 6, "{Pension.LegalRetirement}": 24},
+        "ThresholdMonths" : {"{General.StartAge}": 12, "{Pension.LegalRetirement}": 24},
         "BuyAfterSell": "True",
         "Affordability": { 
             "Sustainability": 0.33, 
@@ -78,7 +82,7 @@
              },
              {
                 "Name": "Wohnung",
-                "Status": "Planned",
+                "Status": "Sold",
                 "Price":  750000.0,
                 "InflationCorrection" : "False",
                 "Mortage": {
