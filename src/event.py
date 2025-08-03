@@ -143,8 +143,9 @@ class EarlyRetirmentEvent(Event) :
             for age in dict(sorted(values.items())).keys():
                 change_event_month = early_retirment_age if config.best_guess_for_number(age) < early_retirment_age else config.age2months(age)
                 value = values[age]
-                EventHandler.add_event(LumpsumEvent(change_event_month,value/factor))
-                factor =  factor - value
+                if (factor != 0) :
+                    EventHandler.add_event(LumpsumEvent(change_event_month,value/factor))
+                    factor =  factor - value
         else :
             EventHandler.add_event(LumpsumEvent(config.age2months(early_retirment_age),1.0))
             lumpsum_ratio = float(values)

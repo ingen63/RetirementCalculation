@@ -12,6 +12,7 @@ class Output :
  
     EARLY_RETIREMENT_AGE = [1,"Early Retirement:"]
     PK_LUMPSUM_RATIO = [2,"Lumpsum Ratio:"]
+    PORTFOLIO_BALANCE = [3,"Portfolio Balance:"]
     HISTORICAL_YEAR = [5,"Historical Year"]
     
     AVERAGE_PERFORMANCE = [10 ,"Average Performance:"]
@@ -115,6 +116,10 @@ class Output :
     @staticmethod
     def add_total_assests_ranking(total_asset : float, scenario_id : str = None) :
         Output.add_ranking(Output.TOTAL_ASSETS, scenario_id, total_asset)
+        
+    @staticmethod
+    def add_time_to_go_ranking(time_to_go : float, scenario_id : str = None) :
+        Output.add_ranking(Output.TIME_TO_GO, scenario_id, time_to_go)
         
     @staticmethod
     def add_ranking(type : list, scenario_id : str, value : float, name : str = None) :

@@ -15,17 +15,17 @@
     },
     "Iterations_5" : {
         "Pension.Private.LumpsumRatio" :  ["(0.0 ... 1.0, 0.05)"],
-        "WealthManagement.HistoricalYear":  ["(1956 ... 2015, 1)"],
+        "WealthManagement.HistoricalYear":  ["(1985 ... 2015, 1)"],
         "WealthManagement.PortfolioBalance" : ["(0.0 ... 1.0, 0.1)" ]
     },
 
     "General": {
-        "StartAge": 62.0,
-        "StartMonth" : 3,
+        "StartAge": 56.0,
+        "StartMonth" : 7,
         "EndAge": 100.0
     },
     "Taxes" : {
-        "TaxRate" : "2.18",
+        "TaxRate" : "2.08",
         "Income":  { "0": 0.0, "50000" : 0.04082, "100000" : 0.06207, "200000" : 0.08373, "400000" : 0.010528, "800000" : 0.011746},
         "Capital": { "0" : 0.0, "100000" : 0.0001, "200000" : 0.0003, "500000" : 0.000602, "1000000" : 0.000942, "2000000" : 0.001383},
         "PensionCapital": { "0" : 0.02, "250000" : 0.02, "500000" : 0.02332, "750000" : 0.03312, "1000000" : 0.04082, "2000000" : 0.062070, "4000000" : 0.08373},
@@ -34,27 +34,27 @@
     },
 
     "Pension": {
-        "EarlyRetirement" : 63.1666,
+        "EarlyRetirement" : 62,
         "LegalRetirement" : 65,
         "Private": {
-            "Capital": 1490842.0,
-            "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.5},
-            "ConversionRate": 0.0408, 
-            "Contribution":  {"50": 4554.0 },
-            "Interest": {"56.75": 0.035, "57.75" : 0.03, "58.75" : 0.095, "59.75" : 0.07, "60.75" : 0.09,  "61.75" : 0.09,  "62.75" : 0.025, "63.75" : 0.01}
+            "Capital": 760000.0,
+            "LumpsumRatio": {"{Pension.EarlyRetirement}" : 0.7},
+            "ConversionRate": 0.051, 
+            "Contribution":  {"50": 3710.0},
+            "Interest": {"56.75": 0.06}
         },
-        "Legal": 1952.0
+        "Legal": 3400.0
     },
 
     "MoneyFlows": {
-        "Savings":  {"{General.StartAge}": 0.0, "{Pension.EarlyRetirement}": 0.0},
-        "Income": {"{General.StartAge}": 9880.00,  "{Pension.EarlyRetirement}": 0.0},
-        "Spendings": {"{General.StartAge}" : 9688.0, "65.0" : 7940.0},
-        "Extra": {"{Pension.EarlyRetirement}": 91520.0, "63.0": -16000.0, "63.5" : -80000.0, "64": -45000.0, "75.0" : -45000.0}
+        "Savings":  {"{General.StartAge}": 1000.0, "{Pension.EarlyRetirement}": 0.0},
+        "Income": {"{General.StartAge}": 12000.00,  "{Pension.EarlyRetirement}": 0.0},
+        "Spendings": {"{General.StartAge}" : 10000.0, "65.0" : 10000.0},
+        "Extra": {"{Pension.EarlyRetirement}": 0.0, "63.0": -16000.0, "63.5" : -80000.0, "64": -45000.0, "75.0" : -45000.0}
     },
 
     "WealthManagement": { 
-        "Wealth": 271665.00,
+        "Wealth": 800000.00,
         "PortfolioBalance": 1.0,
         "StockPerformance": 0.075,
         "BondPerformance": 0.015,
@@ -78,17 +78,17 @@
               {
                 "Name": "Haus",
                 "Status": "Owned",
-                "Price": 745000.0,
+                "Price": 810000.0,
                 "Worth":  1500000.0, 
-                "SellAge": 72.0,
+                "SellAge": 75.0,
                 "InflationCorrection" : "False",
                 "FixCosts": 500.0,
                 "Mortage": {       
-                    "Value": 650000.0,
-                    "Interest": 0.0115,
-                    "StartAge": 62.0,
-                    "Term": 10.0,
-                    "Amortization": 750.0
+                    "Value": 470000.0,
+                    "Interest": 0.01,
+                    "StartAge": 56.0,
+                    "Term": 1.0,
+                    "Amortization": 0.0
                 } 
              },
              {

@@ -33,7 +33,9 @@ def main(file : str, log_level : int, overrides : str) :
     print("------------------------------------------------------------------------------------------------")
     Output.print_ranking()
     print("------------------------------------------------------------------------------------------------")
-    [best,worth] = Output.get_best_and_worth(Output.TOTAL_ASSETS[1], 1)
+    # [best,worth] = Output.get_best_and_worth(f"{Output.SELL_PROPERTY[1]} Haus", 1)
+    [best,worth] = Output.get_best_and_worth(f"{Output.TOTAL_ASSETS[1]}", 1)
+
     Output.print( worth + best)
     print("------------------------------------------------------------------------------------------------")
     
@@ -43,6 +45,8 @@ def main(file : str, log_level : int, overrides : str) :
         print(f"Overall execution time {duration} ms")
     else:
         print(f"Overall execution time {duration/1000:.2f} sec")
+        
+   #   StatsHandler.shows_statistics()    
     
     
     

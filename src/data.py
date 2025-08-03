@@ -65,6 +65,7 @@ class Data:
         self.__end_simulation_month = config.age2months(self.__end_age)
         
         self._total_assets = 0.0
+        self._time_to_go = self.get_end_age()
         
         
     def set_value(self, key, value):
@@ -116,6 +117,9 @@ class Data:
     def set_portfolio_balance(self, value : float) :
         value = 1.0 if (value is None) else value
         self.__portfolio_balance = value
+        
+    def get_portfolio_balance(self) -> float:
+        return self.__portfolio_balance
     
     def get_performance(self) -> float:
         balance = self.__portfolio_balance
@@ -224,7 +228,13 @@ class Data:
     
     def get_actual_age(self) -> float:
         return round(self.__actual_age, 10)
+    
+    def set_time_to_go(self, value : float):
+        self._time_to_go = value
         
+    def get_time_to_go(self) -> float:
+        return self._time_to_go
+
     def get_change_value_event(self) -> set:
         return self.__change_value_events.keys()
     

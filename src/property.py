@@ -425,7 +425,7 @@ class PropertyManager :
         actual_mortage = property.get_mortage().get_value() if property.get_mortage() is not None else 0.0
         
         wealth  = data.get_wealth()
-        income = (data.get_legal_pension() + data.get_private_pension())*Config.MONTHS
+        income = (data.get_legal_pension() + data.get_private_pension() + data.get_income())*Config.MONTHS
         price = property.get_price()
         
         if property.get_status() == Property.OWNED :

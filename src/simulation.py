@@ -7,6 +7,7 @@ from config import Config
 from historical import HistoricalData
 from output import Output
 from property import Property, PropertyManager
+from stats import StatsHandler
 from tax import TaxHandler
 
 
@@ -91,6 +92,7 @@ class Simulation :
 
 
     def run(self, data : Data, config : Config) :
+        time_to_go = False
         
         
         logging.info(f"Simulation started -->  {Output.get_name()} Age {data.get_start_age(): 5.2f} End Age: {data.get_end_age() : 5.2f}")
@@ -98,6 +100,7 @@ class Simulation :
         Output.add_result(Output.START_AGE, f"{data.get_start_age():.2f}")
         Output.add_result(Output.LEGAL_RETIREMENT_AGE, f"{config.getLegalRetirementAge():.2f}")
         Output.add_result(Output.EARLY_RETIREMENT_AGE, f"{config.getEarlyRetirementAge():.2f}")
+        Output.add_result(Output.PORTFOLIO_BALANCE, f"{data.get_portfolio_balance()*100:.2f} %")
 
         
         actual_month = data.get_actual_month()
@@ -116,9 +119,10 @@ class Simulation :
                     wealth_trend = data.get_wealth() + data.get_threshold_months()*(data.get_fixed_income() - data.get_spending())
                     logging.info(f"Need to sell properties with age {data.get_actual_age() : .2f}. {data.get_threshold_months()}-Month Wealth Forecaste: {wealth_trend : ,.0f} CHF Wealth: {data.get_wealth() : ,.0f} CHF ")
                     EventHandler.add_event(SellPropertyEvent(month+1, PropertyManager.get_property_for_sale()))
-            if data.get_wealth() <= 0.0 and PropertyManager.nothing_to_sell() is True :
+            if data.get_wealth() <= 0.0 and PropertyManager.nothing_to_sell() is True and time_to_go is False:
                 logging.info(f"Simulation finished with age {data.get_actual_age()} with no money left.")
-                break
+                data.set_time_to_go(data.get_actual_age())
+                time_to_go = True
         
         self.end_simulation(data)
     
@@ -142,7 +146,8 @@ class Simulation :
 
             
         wealth = data.get_wealth() + data.get_savings() + total_income - total_deductions
-        wealth *=  (1.0 + monthly_performance)
+        if wealth > 0.0 :
+            wealth *=  (1.0 + monthly_performance)
         pk_capital = data.get_pk_capital() + data.get_pk_contribution()
   
         if month % Config.MONTHS == 0 : # Income Tax and Capital Tax are applied once a year at december
@@ -167,7 +172,7 @@ class Simulation :
     
     def end_simulation(self, data : Data) :
         
-        Output.add_result(Output.TIME_TO_GO, f"{data.get_actual_age():.2f}")
+        Output.add_result(Output.TIME_TO_GO, f"{data.get_time_to_go():.2f}")
         Output.add_result(Output.REMAINING_WEALTH,f"{data.get_wealth():,.0f} CHF")
         Output.add_result(Output.TOTAL_ASSETS,f"{data.get_total_assets():,.0f} CHF")
         Output.add_result(Output.AVERAGE_PERFORMANCE, f"{data.yearly_average_performance()*100:.2f} %")
@@ -177,6 +182,9 @@ class Simulation :
         Output.add_performance_ranking(data.yearly_average_performance())
         Output.add_wealth_ranking(data.get_wealth())
         Output.add_total_assests_ranking(data.get_total_assets())
+        Output.add_time_to_go_ranking(data.get_time_to_go())
+        
+       # StatsHandler.update_result(Output.TOTAL_ASSETS[1], Output.scenario-1, data.get_total_assets())
         
         duration = time.time()*1000 - self.start_time
         logging.info(f"Finished simulation after {duration : .2f} ms")

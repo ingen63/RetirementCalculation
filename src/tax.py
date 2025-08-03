@@ -21,6 +21,9 @@ class TaxHandler:
     
     @staticmethod
     def tax_calculation(config : Config, tax_type : str, value : float, default_taxrate : float = 0.0) -> float :
+        if (value < 0.0) :
+            return 0.0
+        
         local_tax_adjustment = config.getValue(Config.TAXES_TAXRATE, 2.0)
         tax_rate = config.interpolate(value, tax_type, default_taxrate)
         return round(tax_rate *local_tax_adjustment* value,2)

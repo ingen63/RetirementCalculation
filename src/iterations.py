@@ -5,6 +5,7 @@ import re
 from config import Config
 from output import Output
 from simulation import Simulation
+from stats import StatsHandler
 
 class Iterations :
     
@@ -25,15 +26,20 @@ class Iterations :
         else :
             keys = self.iterations.keys()
             values = self.iterations.values()
+            columns = [0] * len(keys)
+            index = {key: i for i, key in enumerate(keys)}
             
+            StatsHandler.set_headers(list(keys))
+                       
             for kombination in product(*values) : 
                 config = reference.clone()
 
-                sorting = 200
                 description = ""
                 scenario_name = "\""
                 for key, value in zip(keys,kombination) :
+                    
                     config.setValue(key, value)
+                    columns[index[key]] = value
                     value = round(value,2) if isinstance(value, float) else value
                     description = description + f"{key}:{value} "
                     scenario_name = scenario_name + f"{value} "
@@ -41,10 +47,12 @@ class Iterations :
                 
                 config.replace_variables()
                 config.override(overrides)
+                StatsHandler.add_row(columns)
                 self.simulate(config, description, scenario_name)
+                
                        
         print("------------------------------------------------------------------------------------------------")   
-            
+           
        
     def simulate(self, config : Config, description : str, scenario_name : str) :
         
